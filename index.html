@@ -1,4 +1,5 @@
-<!doctype html>
+<!DOCTYPE html>
+<!-- WORK FIT FINDER V2 — 54 CAREER PATHS — 27 QUESTIONS — JULY 2026 -->
 <html lang="en" data-visualize-standalone>
 <head>
 <meta charset="utf-8">
@@ -688,10 +689,6 @@ svg {
   color: var(--destructive);
 }
 </style>
-</head>
-<body>
-<div id="work-fit-finder-app" aria-live="polite"></div>
-
 <style>
   #work-fit-finder-app {
     color: var(--foreground);
@@ -855,6 +852,29 @@ svg {
     width: fit-content;
   }
 
+  #work-fit-finder-app .wff-link-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+  }
+
+  #work-fit-finder-app .wff-print-only {
+    display: none;
+  }
+
+  #work-fit-finder-app .wff-answer-review-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  #work-fit-finder-app .wff-answer-review-item {
+    border-top: 1px solid var(--border);
+    display: grid;
+    gap: 0.25rem;
+    padding-top: 0.65rem;
+  }
+
   @media (max-width: 560px) {
     #work-fit-finder-app .wff-check-grid,
     #work-fit-finder-app .wff-summary-grid {
@@ -903,8 +923,15 @@ svg {
       margin-top: 1rem;
       padding-top: 1rem;
     }
+
+    #work-fit-finder-app .wff-print-only {
+      display: grid !important;
+    }
   }
 </style>
+</head>
+<body>
+<div id="work-fit-finder-app" aria-live="polite"></div>
 
 <script>
 (() => {
@@ -956,6 +983,16 @@ svg {
       label: "Safety and decision-making",
       strength: "You tend to pause, check, and protect the work before acting.",
       strain: "Unclear or rushed situations may make safe decisions harder."
+    },
+    technology: {
+      label: "Technology and digital tools",
+      strength: "You can work carefully with screens, devices, and unfamiliar digital steps.",
+      strain: "Computer-heavy work may be easier with written steps, practice, and a clear way to get help."
+    },
+    planning: {
+      label: "Planning and problem-solving",
+      strength: "You can compare what matters, choose a sensible next step, and keep work organized.",
+      strain: "Competing priorities may be easier with a written order, clear deadlines, or supervisor guidance."
     }
   };
 
@@ -969,7 +1006,12 @@ svg {
     help: "helping one person at a time",
     creative: "making, designing, or arranging things",
     science: "observing, testing, or learning how living things work",
-    delivery: "moving, stocking, or delivering materials"
+    delivery: "moving, stocking, or delivering materials",
+    make: "assembling, packaging, or producing useful things",
+    technology: "using computers, devices, or digital tools",
+    food: "preparing, growing, or producing food",
+    teach: "helping someone learn a task or skill",
+    health: "supporting healthcare behind the scenes"
   };
 
   const questions = [
@@ -999,8 +1041,8 @@ svg {
       id: "records",
       type: "likert",
       section: "How you work",
-      prompt: "I can keep names, amounts, dates, or other records accurate.",
-      dims: { numbers: 0.7, detail: 0.7 }
+      prompt: "I can keep names, amounts, dates, or other records accurate on paper or in a basic computer form.",
+      dims: { numbers: 0.6, detail: 0.7, technology: 0.3 }
     },
     {
       id: "switching",
@@ -1121,24 +1163,24 @@ svg {
       id: "interests",
       type: "interests",
       section: "What interests you",
-      prompt: "Choose 3 to 5 kinds of work that sound most satisfying.",
+      prompt: "Choose 3 to 6 kinds of work that sound most satisfying.",
       helper: "Choose the activities themselves, not the ones that sound most impressive."
     },
     {
       id: "scenario_log",
       type: "scenario",
       section: "Work situations",
-      prompt: "A feeding amount on the daily board does not match the amount on an animal's individual card. What would you be most likely to do?",
+      prompt: "A quantity on a shelf label does not match the quantity on the work order. What would you be most likely to do?",
       helper: "Choose what you would actually do, not what seems like the test answer.",
       options: [
         {
           value: "compare",
-          label: "Pause, compare both records, and confirm the correct amount before feeding",
+          label: "Pause, compare both records, and confirm the correct quantity before continuing",
           scores: { detail: 5, safety: 5, communication: 4 }
         },
         {
           value: "board",
-          label: "Use the daily board because it is the newest item",
+          label: "Use the work order because it seems more official",
           scores: { detail: 2, safety: 2, communication: 1 }
         },
         {
@@ -1218,61 +1260,84 @@ svg {
       ]
     },
     {
+      id: "scenario_digital",
+      type: "scenario",
+      section: "Work situations",
+      prompt: "While entering information, a computer shows an error you have not seen before. What would you be most likely to do?",
+      options: [
+        {
+          value: "record_follow",
+          label: "Read and record the exact message, follow the written help steps, and ask if it is still unclear",
+          scores: { technology: 5, learning: 5, detail: 5, safety: 4 }
+        },
+        {
+          value: "click",
+          label: "Click different buttons until the message goes away",
+          scores: { technology: 2, learning: 2, detail: 1, safety: 1 }
+        },
+        {
+          value: "stop_silent",
+          label: "Stop working and wait without telling anyone",
+          scores: { technology: 1, learning: 1, communication: 1, safety: 3 }
+        }
+      ]
+    },
+    {
+      id: "scenario_equipment",
+      type: "scenario",
+      section: "Work situations",
+      prompt: "A machine or powered tool begins making a new sound, and the finished work looks different. What would you be most likely to do?",
+      options: [
+        {
+          value: "stop_report",
+          label: "Stop it safely, separate the affected work, and report what changed",
+          scores: { practical: 5, planning: 5, safety: 5, detail: 4, communication: 4 }
+        },
+        {
+          value: "continue",
+          label: "Keep it running so the work does not fall behind",
+          scores: { practical: 2, planning: 1, safety: 1, detail: 2 }
+        },
+        {
+          value: "repair",
+          label: "Open the equipment and try to repair it without checking your training or authority",
+          scores: { practical: 3, planning: 1, safety: 1, communication: 1 }
+        }
+      ]
+    },
+    {
+      id: "scenario_priorities",
+      type: "scenario",
+      section: "Work situations",
+      prompt: "You have three tasks due before the end of the shift, but there is not enough time to finish all three. What would you be most likely to do?",
+      options: [
+        {
+          value: "compare_ask",
+          label: "Check the deadlines and consequences, then confirm the order of priority with the lead",
+          scores: { planning: 5, communication: 5, adaptability: 4, consistency: 4 }
+        },
+        {
+          value: "favorite",
+          label: "Do the task you like best and leave the others for someone else",
+          scores: { planning: 1, communication: 1, adaptability: 2, consistency: 1 }
+        },
+        {
+          value: "rush_all",
+          label: "Rush through all three without checking whether the work stays accurate",
+          scores: { planning: 2, safety: 1, detail: 1, steadiness: 2 }
+        }
+      ]
+    },
+    {
       id: "task_detail",
       type: "task",
       section: "Short practical exercises",
-      prompt: "Which item needs to be checked before feeding?",
-      helper: "Daily board: Poppy — 1 cup — blue bowl. Milo — 3/4 cup — green bowl. Hazel — 1/2 cup — red bowl. Milo's individual card says 1/2 cup — green bowl.",
+      prompt: "Which detail needs to be checked before the order is packed?",
+      helper: "Packing list: Order 417 — 3 blue filters — bin B12. Pick ticket: Order 471 — 3 blue filters — bin B12.",
       options: [
-        { value: "poppy", label: "Poppy's bowl color", scores: { detail: 1, safety: 2 } },
-        { value: "milo", label: "Milo's food amount", scores: { detail: 5, safety: 5 } },
-        { value: "hazel", label: "Hazel's food amount", scores: { detail: 1, safety: 2 } }
-      ]
-    },
-    {
-      id: "task_sequence",
-      type: "task",
-      section: "Short practical exercises",
-      prompt: "Which order is the safest way to clean an occupied enclosure?",
-      options: [
-        {
-          value: "safe",
-          label: "Move the animal to a secure space; remove waste; wash and rinse; dry and replace bedding; return the animal",
-          scores: { practical: 5, safety: 5, learning: 4 }
-        },
-        {
-          value: "animal_inside",
-          label: "Spray the enclosure; move the animal; remove waste; add bedding; dry the floor",
-          scores: { practical: 1, safety: 1, learning: 2 }
-        },
-        {
-          value: "wet_return",
-          label: "Move the animal; wash the enclosure; add bedding while wet; return the animal; remove waste",
-          scores: { practical: 2, safety: 1, learning: 2 }
-        }
-      ]
-    },
-    {
-      id: "task_reading",
-      type: "task",
-      section: "Short practical exercises",
-      prompt: "A care note says: “If the animal refuses food, do not hide the medicine in another food. Record ‘not given’ and tell the lead before the next round.” The animal refuses breakfast. What should happen?",
-      options: [
-        {
-          value: "record_tell",
-          label: "Record ‘not given’ and tell the lead before the next round",
-          scores: { learning: 5, detail: 5, safety: 5 }
-        },
-        {
-          value: "hide",
-          label: "Hide the medicine in a different food and try again",
-          scores: { learning: 1, detail: 1, safety: 1 }
-        },
-        {
-          value: "later",
-          label: "Wait until the end of the shift to mention it",
-          scores: { learning: 2, detail: 2, safety: 2 }
-        }
+        { value: "order", label: "The order number", scores: { detail: 5, safety: 4 } },
+        { value: "quantity", label: "The quantity", scores: { detail: 2, safety: 2 } },
+        { value: "bin", label: "The bin number", scores: { detail: 2, safety: 2 } }
       ]
     },
     {
@@ -1303,10 +1368,14 @@ svg {
     { id: "waste", label: "Cleaning animal waste or heavy messes" },
     { id: "lifting", label: "Regular lifting over about 25 pounds" },
     { id: "outdoors", label: "Working outdoors in difficult weather" },
-    { id: "weekends", label: "Evening, weekend, or holiday shifts" }
+    { id: "weekends", label: "Evening, weekend, or holiday shifts" },
+    { id: "standing", label: "Standing or walking for most of a shift" },
+    { id: "driving", label: "Regular driving between work sites" },
+    { id: "chemicals", label: "Strong odors, chemicals, or protective equipment" },
+    { id: "screens", label: "Long stretches of computer or screen work" }
   ];
 
-  const jobs = [
+  const baseJobs = [
     {
       tier: "now",
       title: "Farm-animal caretaker",
@@ -1314,7 +1383,7 @@ svg {
       interests: { animals: 0.8, plants: 0.2 },
       abilities: { consistency: 0.25, detail: 0.2, practical: 0.2, safety: 0.2, learning: 0.15 },
       env: { pace: 2, people: 1, structure: 1, setting: 2, schedule: 3, emotion: 2 },
-      tags: ["waste", "lifting", "outdoors", "weekends"],
+      tags: ["waste", "lifting", "outdoors", "weekends", "standing"],
       watch: "Animal care is physically demanding and schedules often include early mornings, weekends, or holidays.",
       url: "https://www.onetonline.org/link/summary/45-2093.00"
     },
@@ -1325,7 +1394,7 @@ svg {
       interests: { animals: 0.8, maintain: 0.2 },
       abilities: { consistency: 0.2, detail: 0.2, practical: 0.15, safety: 0.25, steadiness: 0.2 },
       env: { pace: 2, people: 2, structure: 1, setting: 3, schedule: 3, emotion: 2 },
-      tags: ["noise", "injury", "waste", "lifting", "weekends"],
+      tags: ["noise", "injury", "waste", "lifting", "weekends", "standing"],
       watch: "Boarding facilities can become loud and hectic during drop-off, pickup, and holidays.",
       url: "https://www.onetonline.org/link/summary/39-2021.00"
     },
@@ -1336,7 +1405,7 @@ svg {
       interests: { animals: 0.9, delivery: 0.1 },
       abilities: { consistency: 0.25, detail: 0.2, safety: 0.25, communication: 0.15, practical: 0.15 },
       env: { pace: 1, people: 1, structure: 2, setting: 2, schedule: 3, emotion: 1 },
-      tags: ["noise", "outdoors", "weekends"],
+      tags: ["noise", "outdoors", "weekends", "driving", "standing"],
       watch: "Independent pet care still requires client communication, reliable transportation, and irregular peak times.",
       url: "https://www.onetonline.org/link/summary/39-2021.00"
     },
@@ -1347,7 +1416,7 @@ svg {
       interests: { plants: 0.7, organize: 0.15, maintain: 0.15 },
       abilities: { consistency: 0.3, detail: 0.2, practical: 0.25, learning: 0.15, safety: 0.1 },
       env: { pace: 2, people: 1, structure: 1, setting: 2, schedule: 2, emotion: 1 },
-      tags: ["lifting", "outdoors", "weekends"],
+      tags: ["lifting", "outdoors", "weekends", "standing", "chemicals"],
       watch: "The work can be seasonal, warm, wet, repetitive, and physically active.",
       url: "https://www.onetonline.org/link/summary/45-2092.00"
     },
@@ -1369,7 +1438,7 @@ svg {
       interests: { organize: 0.45, delivery: 0.35, records: 0.2 },
       abilities: { consistency: 0.25, detail: 0.25, practical: 0.2, numbers: 0.15, safety: 0.15 },
       env: { pace: 2, people: 1, structure: 1, setting: 3, schedule: 2, emotion: 1 },
-      tags: ["noise", "lifting", "weekends"],
+      tags: ["noise", "lifting", "weekends", "standing"],
       watch: "Retail inventory work may involve quotas, overnight shifts, or sudden rushes; back-room roles vary greatly by employer.",
       url: "https://www.onetonline.org/link/summary/53-7065.00"
     },
@@ -1380,7 +1449,7 @@ svg {
       interests: { plants: 0.45, maintain: 0.25, repair: 0.2, delivery: 0.1 },
       abilities: { practical: 0.3, consistency: 0.25, safety: 0.2, detail: 0.15, learning: 0.1 },
       env: { pace: 2, people: 1, structure: 2, setting: 2, schedule: 2, emotion: 1 },
-      tags: ["noise", "lifting", "outdoors"],
+      tags: ["noise", "lifting", "outdoors", "standing", "chemicals"],
       watch: "Weather, machinery noise, seasonal hours, and physical stamina matter.",
       url: "https://www.onetonline.org/link/summary/37-3011.00"
     },
@@ -1391,7 +1460,7 @@ svg {
       interests: { animals: 0.65, maintain: 0.2, creative: 0.15 },
       abilities: { practical: 0.25, steadiness: 0.2, safety: 0.2, detail: 0.2, consistency: 0.15 },
       env: { pace: 3, people: 2, structure: 1, setting: 3, schedule: 2, emotion: 2 },
-      tags: ["noise", "injury", "waste", "lifting", "weekends"],
+      tags: ["noise", "injury", "waste", "lifting", "weekends", "standing", "chemicals"],
       watch: "Bathing areas are noisy and wet, and frightened animals may scratch, bite, or resist handling.",
       url: "https://www.onetonline.org/link/summary/39-2021.00"
     },
@@ -1402,7 +1471,7 @@ svg {
       interests: { organize: 0.25, records: 0.25, repair: 0.15, delivery: 0.35 },
       abilities: { detail: 0.35, consistency: 0.25, numbers: 0.15, safety: 0.15, practical: 0.1 },
       env: { pace: 3, people: 1, structure: 1, setting: 3, schedule: 2, emotion: 1 },
-      tags: ["noise", "lifting", "weekends"],
+      tags: ["noise", "lifting", "weekends", "standing"],
       watch: "Production employers differ sharply; some use calm inspection stations, while others enforce fast line speeds.",
       url: "https://www.onetonline.org/link/summary/51-9061.00"
     },
@@ -1413,7 +1482,7 @@ svg {
       interests: { animals: 0.65, science: 0.25, records: 0.1 },
       abilities: { detail: 0.2, safety: 0.2, learning: 0.2, steadiness: 0.2, communication: 0.2 },
       env: { pace: 3, people: 3, structure: 1, setting: 3, schedule: 3, emotion: 3 },
-      tags: ["noise", "injury", "conflict", "waste", "lifting", "weekends"],
+      tags: ["noise", "injury", "conflict", "waste", "lifting", "weekends", "standing"],
       watch: "Clinics can be fast, emotionally difficult, and physically risky even when the animal-care duties are appealing.",
       url: "https://www.onetonline.org/link/summary/31-9096.00"
     },
@@ -1424,7 +1493,7 @@ svg {
       interests: { animals: 0.55, creative: 0.25, maintain: 0.2 },
       abilities: { practical: 0.25, steadiness: 0.2, detail: 0.2, safety: 0.2, communication: 0.15 },
       env: { pace: 2, people: 3, structure: 2, setting: 3, schedule: 2, emotion: 2 },
-      tags: ["noise", "injury", "conflict", "waste", "lifting", "weekends"],
+      tags: ["noise", "injury", "conflict", "waste", "lifting", "weekends", "standing", "chemicals"],
       watch: "The craft may fit while the salon does not; noise, scheduling pressure, animal restraint, and client expectations are central.",
       url: "https://www.onetonline.org/link/summary/39-2021.00"
     },
@@ -1435,7 +1504,7 @@ svg {
       interests: { animals: 0.6, help: 0.2, science: 0.2 },
       abilities: { learning: 0.2, communication: 0.25, steadiness: 0.2, detail: 0.15, safety: 0.2 },
       env: { pace: 2, people: 3, structure: 2, setting: 2, schedule: 2, emotion: 2 },
-      tags: ["noise", "injury", "conflict", "outdoors", "weekends"],
+      tags: ["noise", "injury", "conflict", "outdoors", "weekends", "standing", "driving"],
       watch: "Training animals also means teaching owners, handling inconsistent follow-through, and sometimes managing reactive dogs.",
       url: "https://www.onetonline.org/link/summary/39-2011.00"
     },
@@ -1446,7 +1515,7 @@ svg {
       interests: { records: 0.7, organize: 0.2, help: 0.1 },
       abilities: { detail: 0.3, learning: 0.25, numbers: 0.2, consistency: 0.15, communication: 0.1 },
       env: { pace: 2, people: 1, structure: 1, setting: 1, schedule: 1, emotion: 1 },
-      tags: [],
+      tags: ["screens"],
       watch: "This path requires sustained computer work, careful reading, and learning medical terminology.",
       url: "https://www.onetonline.org/link/summary/29-2072.00"
     },
@@ -1457,7 +1526,7 @@ svg {
       interests: { records: 0.65, organize: 0.25, help: 0.1 },
       abilities: { numbers: 0.35, detail: 0.3, consistency: 0.2, learning: 0.1, communication: 0.05 },
       env: { pace: 2, people: 1, structure: 1, setting: 1, schedule: 1, emotion: 1 },
-      tags: [],
+      tags: ["screens"],
       watch: "Accuracy and deadline periods matter, and entry-level opportunities vary as routine tasks become more automated.",
       url: "https://www.onetonline.org/link/summary/43-3031.00"
     },
@@ -1468,7 +1537,7 @@ svg {
       interests: { organize: 0.35, science: 0.25, maintain: 0.25, records: 0.15 },
       abilities: { detail: 0.3, consistency: 0.25, learning: 0.2, safety: 0.2, practical: 0.05 },
       env: { pace: 3, people: 2, structure: 1, setting: 3, schedule: 3, emotion: 1 },
-      tags: ["noise", "lifting", "weekends"],
+      tags: ["noise", "lifting", "weekends", "standing", "chemicals"],
       watch: "It avoids most patient interaction but still carries hospital urgency, standing, heat, protective equipment, and strict accuracy demands.",
       url: "https://www.onetonline.org/link/summary/31-9093.00"
     },
@@ -1479,7 +1548,7 @@ svg {
       interests: { plants: 0.6, science: 0.2, organize: 0.1, repair: 0.1 },
       abilities: { practical: 0.25, learning: 0.25, detail: 0.2, consistency: 0.2, safety: 0.1 },
       env: { pace: 2, people: 1, structure: 2, setting: 2, schedule: 2, emotion: 1 },
-      tags: ["lifting", "outdoors", "weekends"],
+      tags: ["lifting", "outdoors", "weekends", "standing", "driving", "chemicals"],
       watch: "Seasonal demand, weather, pesticides, and physical work vary by employer and specialty.",
       url: "https://www.onetonline.org/link/summary/19-4012.00"
     },
@@ -1490,7 +1559,7 @@ svg {
       interests: { records: 0.35, organize: 0.25, repair: 0.2, science: 0.2 },
       abilities: { detail: 0.35, numbers: 0.2, safety: 0.2, learning: 0.15, consistency: 0.1 },
       env: { pace: 2, people: 2, structure: 1, setting: 3, schedule: 2, emotion: 1 },
-      tags: ["noise", "lifting", "weekends"],
+      tags: ["noise", "lifting", "weekends", "standing"],
       watch: "Look specifically for bench inspection, receiving inspection, or lab-style quality roles rather than fast production lines.",
       url: "https://www.onetonline.org/link/summary/51-9061.00"
     },
@@ -1501,7 +1570,7 @@ svg {
       interests: { animals: 0.5, science: 0.35, records: 0.15 },
       abilities: { detail: 0.2, safety: 0.2, learning: 0.2, steadiness: 0.2, communication: 0.2 },
       env: { pace: 3, people: 3, structure: 1, setting: 3, schedule: 3, emotion: 3 },
-      tags: ["noise", "injury", "conflict", "waste", "lifting", "weekends"],
+      tags: ["noise", "injury", "conflict", "waste", "lifting", "weekends", "standing"],
       watch: "This is medically and emotionally demanding work involving distressed owners, injured animals, procedures, and sometimes euthanasia.",
       url: "https://www.onetonline.org/link/summary/29-2056.00"
     },
@@ -1512,7 +1581,7 @@ svg {
       interests: { science: 0.45, plants: 0.25, records: 0.2, delivery: 0.1 },
       abilities: { detail: 0.25, learning: 0.25, numbers: 0.2, practical: 0.15, safety: 0.15 },
       env: { pace: 2, people: 2, structure: 1, setting: 2, schedule: 2, emotion: 1 },
-      tags: ["outdoors"],
+      tags: ["outdoors", "driving", "standing", "chemicals"],
       watch: "Programs include science and math coursework; jobs may combine field sampling, travel, protective equipment, laboratories, and detailed records.",
       url: "https://www.onetonline.org/link/summary/19-4042.00"
     },
@@ -1523,7 +1592,7 @@ svg {
       interests: { science: 0.6, records: 0.25, animals: 0.1, plants: 0.05 },
       abilities: { detail: 0.3, learning: 0.3, numbers: 0.2, safety: 0.15, communication: 0.05 },
       env: { pace: 2, people: 2, structure: 1, setting: 1, schedule: 1, emotion: 1 },
-      tags: [],
+      tags: ["chemicals", "standing"],
       watch: "This route requires substantial science coursework and precise written documentation.",
       url: "https://www.onetonline.org/link/summary/19-4021.00"
     },
@@ -1534,7 +1603,7 @@ svg {
       interests: { plants: 0.45, science: 0.3, repair: 0.15, records: 0.1 },
       abilities: { practical: 0.25, detail: 0.2, learning: 0.2, adaptability: 0.15, safety: 0.2 },
       env: { pace: 2, people: 1, structure: 2, setting: 2, schedule: 2, emotion: 1 },
-      tags: ["lifting", "outdoors"],
+      tags: ["lifting", "outdoors", "standing", "driving"],
       watch: "Field jobs may involve remote locations, difficult weather, driving, seasonal work, and changing conditions.",
       url: "https://www.onetonline.org/link/summary/19-4071.00"
     },
@@ -1545,7 +1614,7 @@ svg {
       interests: { animals: 0.4, science: 0.45, records: 0.15 },
       abilities: { learning: 0.3, numbers: 0.25, detail: 0.2, communication: 0.15, consistency: 0.1 },
       env: { pace: 2, people: 2, structure: 2, setting: 1, schedule: 1, emotion: 1 },
-      tags: [],
+      tags: ["screens"],
       watch: "The work is less direct animal care than the title suggests and requires advanced science, math, writing, and research skills.",
       url: "https://www.onetonline.org/link/summary/19-1011.00"
     },
@@ -1556,7 +1625,7 @@ svg {
       interests: { animals: 0.35, science: 0.45, plants: 0.1, records: 0.1 },
       abilities: { learning: 0.3, detail: 0.25, numbers: 0.2, adaptability: 0.15, communication: 0.1 },
       env: { pace: 2, people: 2, structure: 2, setting: 2, schedule: 2, emotion: 1 },
-      tags: ["outdoors"],
+      tags: ["outdoors", "standing", "driving"],
       watch: "Openings are competitive and the degree includes biology, statistics, writing, and field-research requirements.",
       url: "https://www.onetonline.org/link/summary/19-1023.00"
     },
@@ -1567,11 +1636,481 @@ svg {
       interests: { records: 0.45, organize: 0.35, help: 0.2 },
       abilities: { detail: 0.3, learning: 0.25, consistency: 0.2, communication: 0.15, numbers: 0.1 },
       env: { pace: 1, people: 2, structure: 1, setting: 1, schedule: 1, emotion: 1 },
-      tags: [],
+      tags: ["screens"],
       watch: "The work is orderly, but many jobs still include patron questions, technology help, and limited local openings.",
       url: "https://www.onetonline.org/link/summary/25-4031.00"
     }
   ];
+
+  const baseJobMeta = {
+    "Farm-animal caretaker": { family: "Animal care", market: "regular", search: "farm animal caretaker" },
+    "Kennel or boarding attendant": { family: "Animal care", market: "regular", search: "kennel attendant" },
+    "Pet sitter or dog walker": { family: "Animal care", market: "regular", search: "pet sitter dog walker" },
+    "Greenhouse or nursery worker": { family: "Plants and grounds", market: "regular", search: "greenhouse nursery worker" },
+    "Library materials aide": { family: "Records and administration", market: "narrow", search: "library assistant" },
+    "Stock or inventory associate": { family: "Logistics and inventory", market: "strong", search: "inventory stock associate" },
+    "Grounds maintenance worker": { family: "Plants and grounds", market: "regular", search: "grounds maintenance" },
+    "Pet bather or grooming assistant": { family: "Animal care", market: "regular", search: "pet bather grooming assistant" },
+    "Quality inspection or packaging trainee": { family: "Manufacturing and quality", market: "strong", search: "quality inspection packaging" },
+    "Veterinary assistant": { family: "Animal care", market: "regular", search: "veterinary assistant" },
+    "Pet groomer": { family: "Animal care", market: "regular", search: "pet groomer" },
+    "Dog trainer": { family: "Animal care", market: "narrow", search: "dog trainer" },
+    "Medical records specialist": { family: "Healthcare support", market: "strong", search: "medical records specialist" },
+    "Bookkeeping or accounts clerk": { family: "Records and administration", market: "regular", search: "bookkeeping accounts clerk" },
+    "Sterile processing technician": { family: "Healthcare support", market: "strong", search: "sterile processing technician" },
+    "Agricultural technician — plant or greenhouse focus": { family: "Agriculture and food", market: "regular", search: "agricultural greenhouse technician" },
+    "Quality control inspector": { family: "Manufacturing and quality", market: "strong", search: "quality control inspector" },
+    "Veterinary technician": { family: "Animal care", market: "regular", search: "veterinary technician" },
+    "Environmental science and protection technician": { family: "Science and conservation", market: "narrow", search: "environmental science technician" },
+    "Biological technician": { family: "Science and conservation", market: "narrow", search: "biological laboratory technician" },
+    "Forest or conservation technician": { family: "Science and conservation", market: "narrow", search: "conservation technician" },
+    "Animal scientist": { family: "Science and conservation", market: "narrow", search: "animal science" },
+    "Zoologist or wildlife biologist": { family: "Science and conservation", market: "narrow", search: "wildlife biologist" },
+    "Library technician": { family: "Records and administration", market: "narrow", search: "library technician" }
+  };
+
+  const expandedJobs = [
+    {
+      tier: "now",
+      family: "Logistics and inventory",
+      market: "strong",
+      search: "shipping receiving clerk",
+      title: "Shipping and receiving clerk",
+      training: "GED plus short employer training is common",
+      interests: { delivery: 0.4, organize: 0.3, records: 0.2, technology: 0.1 },
+      abilities: { detail: 0.25, consistency: 0.2, numbers: 0.15, planning: 0.15, technology: 0.1, communication: 0.1, safety: 0.05 },
+      env: { pace: 2, people: 2, structure: 1, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["noise", "lifting", "standing"],
+      watch: "The best fit may be a receiving, inventory, or small-warehouse role rather than a quota-driven distribution center.",
+      url: "https://www.onetonline.org/link/summary/43-5071.00"
+    },
+    {
+      tier: "now",
+      family: "Logistics and inventory",
+      market: "strong",
+      search: "material handler order picker",
+      title: "Material handler or order picker",
+      training: "Usually learned on the job",
+      interests: { delivery: 0.45, organize: 0.25, make: 0.2, technology: 0.1 },
+      abilities: { consistency: 0.25, practical: 0.2, detail: 0.2, safety: 0.15, planning: 0.1, technology: 0.1 },
+      env: { pace: 3, people: 1, structure: 1, setting: 3, schedule: 2, emotion: 1 },
+      tags: ["noise", "lifting", "standing", "weekends"],
+      watch: "Some warehouses are calm and organized; others use strict speed quotas, changing shifts, and constant equipment noise.",
+      url: "https://www.onetonline.org/link/summary/53-7062.00"
+    },
+    {
+      tier: "now",
+      family: "Manufacturing and quality",
+      market: "strong",
+      search: "production assembler",
+      title: "Production assembler",
+      training: "GED and employer training for many entry roles",
+      interests: { make: 0.5, repair: 0.2, organize: 0.15, technology: 0.15 },
+      abilities: { practical: 0.25, consistency: 0.25, detail: 0.2, safety: 0.15, learning: 0.1, planning: 0.05 },
+      env: { pace: 2, people: 2, structure: 1, setting: 3, schedule: 2, emotion: 1 },
+      tags: ["noise", "standing", "lifting", "weekends"],
+      watch: "Look for bench assembly, medical-device assembly, or small-batch production when fast conveyor work would be draining.",
+      url: "https://www.onetonline.org/link/summary/51-2099.00"
+    },
+    {
+      tier: "now",
+      family: "Agriculture and food",
+      market: "strong",
+      search: "food production packaging",
+      title: "Food production or packaging worker",
+      training: "Usually learned on the job",
+      interests: { food: 0.4, make: 0.35, organize: 0.15, science: 0.1 },
+      abilities: { consistency: 0.25, safety: 0.25, detail: 0.2, practical: 0.15, learning: 0.1, planning: 0.05 },
+      env: { pace: 3, people: 1, structure: 1, setting: 3, schedule: 3, emotion: 1 },
+      tags: ["noise", "standing", "lifting", "chemicals", "weekends"],
+      watch: "Temperatures, odors, protective clothing, line speed, and shift schedules differ greatly between food employers.",
+      url: "https://www.onetonline.org/link/summary/51-3099.00"
+    },
+    {
+      tier: "now",
+      family: "Facilities and maintenance",
+      market: "strong",
+      search: "custodian facilities attendant",
+      title: "Custodial or facilities attendant",
+      training: "Usually learned on the job",
+      interests: { maintain: 0.5, organize: 0.2, repair: 0.15, help: 0.15 },
+      abilities: { consistency: 0.3, practical: 0.2, safety: 0.2, detail: 0.15, planning: 0.1, communication: 0.05 },
+      env: { pace: 1, people: 1, structure: 1, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["lifting", "standing", "chemicals", "weekends"],
+      watch: "Many roles are independent and predictable, but cleaning chemicals, physical work, and evening schedules should be checked.",
+      url: "https://www.onetonline.org/link/summary/37-2011.00"
+    },
+    {
+      tier: "now",
+      family: "Facilities and maintenance",
+      market: "regular",
+      search: "laundry attendant",
+      title: "Laundry attendant",
+      training: "Usually learned on the job",
+      interests: { maintain: 0.4, organize: 0.3, make: 0.15, help: 0.15 },
+      abilities: { consistency: 0.3, detail: 0.2, practical: 0.15, safety: 0.15, planning: 0.1, numbers: 0.1 },
+      env: { pace: 2, people: 1, structure: 1, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["standing", "lifting", "chemicals", "weekends"],
+      watch: "Commercial laundry can be warm, repetitive, and noisy; smaller care facilities or hospitality employers may feel different.",
+      url: "https://www.onetonline.org/link/summary/51-6011.00"
+    },
+    {
+      tier: "now",
+      family: "Records and administration",
+      market: "regular",
+      search: "office file clerk",
+      title: "Office or file clerk",
+      training: "GED plus basic office-software training for many roles",
+      interests: { records: 0.45, organize: 0.35, help: 0.1, technology: 0.1 },
+      abilities: { detail: 0.25, consistency: 0.2, technology: 0.2, planning: 0.15, communication: 0.1, learning: 0.1 },
+      env: { pace: 2, people: 2, structure: 1, setting: 1, schedule: 1, emotion: 1 },
+      tags: ["screens", "conflict"],
+      watch: "Some jobs are quiet and task-focused; front-desk responsibilities can add frequent interruptions and upset callers.",
+      url: "https://www.onetonline.org/link/summary/43-9061.00"
+    },
+    {
+      tier: "now",
+      family: "Technology and data",
+      market: "regular",
+      search: "document scanning data entry",
+      title: "Document scanning or data-entry clerk",
+      training: "Basic computer skills and short employer training",
+      interests: { records: 0.45, technology: 0.35, organize: 0.2 },
+      abilities: { detail: 0.3, technology: 0.25, consistency: 0.2, numbers: 0.1, learning: 0.1, planning: 0.05 },
+      env: { pace: 2, people: 1, structure: 1, setting: 1, schedule: 1, emotion: 1 },
+      tags: ["screens"],
+      watch: "Accuracy and sitting tolerance matter, and some employers use repetitive productivity targets.",
+      url: "https://www.onetonline.org/link/summary/43-9021.00"
+    },
+    {
+      tier: "now",
+      family: "Creative production",
+      market: "regular",
+      search: "print production finishing assistant",
+      title: "Print or finishing assistant",
+      training: "Usually employer training; a portfolio is rarely needed for entry production roles",
+      interests: { creative: 0.3, make: 0.3, technology: 0.2, organize: 0.2 },
+      abilities: { detail: 0.25, practical: 0.2, technology: 0.15, consistency: 0.15, planning: 0.1, learning: 0.1, safety: 0.05 },
+      env: { pace: 2, people: 1, structure: 1, setting: 2, schedule: 1, emotion: 1 },
+      tags: ["noise", "standing", "chemicals"],
+      watch: "Small print shops may combine careful production with customer deadlines; noise and solvent exposure vary by process.",
+      url: "https://www.onetonline.org/link/summary/51-5113.00"
+    },
+    {
+      tier: "now",
+      family: "Skilled trades and repair",
+      market: "regular",
+      search: "maintenance shop helper",
+      title: "Maintenance or shop helper",
+      training: "Entry helper roles usually provide supervised on-the-job training",
+      interests: { repair: 0.45, make: 0.25, maintain: 0.2, technology: 0.1 },
+      abilities: { practical: 0.3, safety: 0.25, learning: 0.15, detail: 0.1, planning: 0.1, communication: 0.1 },
+      env: { pace: 2, people: 2, structure: 1, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["noise", "lifting", "standing", "chemicals", "weekends"],
+      watch: "A patient mentor and clear safety boundaries matter; helper jobs vary from organized preventive maintenance to urgent repairs.",
+      url: "https://www.onetonline.org/link/summary/49-9098.00"
+    },
+    {
+      tier: "training",
+      family: "Healthcare support",
+      market: "strong",
+      search: "pharmacy technician",
+      title: "Pharmacy technician",
+      training: "Employer training or a short program; Wisconsin requirements and certification preferences vary",
+      interests: { health: 0.45, records: 0.25, organize: 0.2, help: 0.1 },
+      abilities: { detail: 0.25, safety: 0.25, numbers: 0.15, technology: 0.15, learning: 0.1, communication: 0.1 },
+      env: { pace: 3, people: 3, structure: 1, setting: 2, schedule: 3, emotion: 2 },
+      tags: ["conflict", "standing", "screens", "weekends"],
+      watch: "Hospital pharmacies may offer less customer conflict than retail, but both require accuracy under time pressure.",
+      url: "https://www.onetonline.org/link/summary/29-2052.00"
+    },
+    {
+      tier: "training",
+      family: "Healthcare support",
+      market: "regular",
+      search: "dental laboratory technician",
+      title: "Dental laboratory technician",
+      training: "Employer training or a laboratory technology program",
+      interests: { health: 0.3, creative: 0.25, make: 0.25, science: 0.1, technology: 0.1 },
+      abilities: { detail: 0.25, practical: 0.2, learning: 0.15, technology: 0.15, consistency: 0.1, planning: 0.1, safety: 0.05 },
+      env: { pace: 2, people: 1, structure: 1, setting: 1, schedule: 1, emotion: 1 },
+      tags: ["chemicals", "screens"],
+      watch: "This is precise bench work with limited patient contact, but local openings are fewer than general healthcare support jobs.",
+      url: "https://www.onetonline.org/link/summary/51-9081.00"
+    },
+    {
+      tier: "training",
+      family: "Technology and data",
+      market: "strong",
+      search: "IT support help desk technician",
+      title: "Computer user support specialist",
+      training: "A certificate, technical diploma, or demonstrated skills can open some entry roles",
+      interests: { technology: 0.55, help: 0.2, records: 0.15, repair: 0.1 },
+      abilities: { technology: 0.25, learning: 0.2, communication: 0.2, planning: 0.15, detail: 0.1, steadiness: 0.1 },
+      env: { pace: 2, people: 3, structure: 2, setting: 1, schedule: 2, emotion: 2 },
+      tags: ["conflict", "screens", "weekends"],
+      watch: "The technology may fit while a busy phone queue does not; internal support, device setup, or scheduled desk-side work can be calmer.",
+      url: "https://www.onetonline.org/link/summary/15-1232.00"
+    },
+    {
+      tier: "training",
+      family: "Education and community support",
+      market: "strong",
+      search: "teacher assistant paraprofessional",
+      title: "Teacher assistant or paraprofessional",
+      training: "Requirements vary; some districts accept a GED plus an assessment or short training",
+      interests: { teach: 0.45, help: 0.35, organize: 0.1, creative: 0.1 },
+      abilities: { communication: 0.25, steadiness: 0.2, consistency: 0.15, learning: 0.15, planning: 0.15, adaptability: 0.1 },
+      env: { pace: 3, people: 3, structure: 2, setting: 3, schedule: 1, emotion: 3 },
+      tags: ["noise", "conflict", "standing"],
+      watch: "The schedule can be predictable, but classrooms may be noisy, emotionally intense, and full of rapid interpersonal demands.",
+      url: "https://www.onetonline.org/link/summary/25-9045.00"
+    },
+    {
+      tier: "training",
+      family: "Manufacturing and quality",
+      market: "strong",
+      search: "CNC machine operator",
+      title: "CNC machine operator",
+      training: "Employer training, a short certificate, or technical-college coursework",
+      interests: { make: 0.35, repair: 0.3, technology: 0.2, records: 0.15 },
+      abilities: { detail: 0.2, practical: 0.2, technology: 0.15, numbers: 0.15, safety: 0.15, learning: 0.1, planning: 0.05 },
+      env: { pace: 2, people: 1, structure: 1, setting: 3, schedule: 2, emotion: 1 },
+      tags: ["noise", "standing", "chemicals", "weekends"],
+      watch: "The work rewards careful setup and measurement, but shop noise, metalworking fluids, and shift schedules should be tested.",
+      url: "https://www.onetonline.org/link/summary/51-9161.00"
+    },
+    {
+      tier: "training",
+      family: "Skilled trades and repair",
+      market: "strong",
+      search: "welder fabricator",
+      title: "Welder or fabricator",
+      training: "A short technical program, employer training, or apprenticeship",
+      interests: { repair: 0.35, make: 0.4, creative: 0.1, technology: 0.15 },
+      abilities: { practical: 0.25, safety: 0.25, detail: 0.15, planning: 0.1, learning: 0.1, consistency: 0.1, steadiness: 0.05 },
+      env: { pace: 2, people: 1, structure: 1, setting: 3, schedule: 2, emotion: 1 },
+      tags: ["noise", "standing", "lifting", "chemicals", "weekends"],
+      watch: "Protective gear, heat, fumes, sparks, and physical positioning are essential realities even in orderly fabrication shops.",
+      url: "https://www.onetonline.org/link/summary/51-4121.00"
+    },
+    {
+      tier: "training",
+      family: "Skilled trades and repair",
+      market: "strong",
+      search: "industrial maintenance technician",
+      title: "Industrial maintenance technician",
+      training: "Technical diploma, apprenticeship, or substantial employer training",
+      interests: { repair: 0.45, technology: 0.2, make: 0.15, organize: 0.1, science: 0.1 },
+      abilities: { practical: 0.2, planning: 0.2, safety: 0.2, learning: 0.15, technology: 0.1, detail: 0.1, adaptability: 0.05 },
+      env: { pace: 3, people: 2, structure: 2, setting: 3, schedule: 3, emotion: 1 },
+      tags: ["noise", "lifting", "standing", "chemicals", "weekends"],
+      watch: "Preventive maintenance can be methodical; breakdown calls can be loud, urgent, and unpredictable.",
+      url: "https://www.onetonline.org/link/summary/49-9071.00"
+    },
+    {
+      tier: "training",
+      family: "Skilled trades and repair",
+      market: "strong",
+      search: "HVAC technician",
+      title: "Heating and cooling technician",
+      training: "Technical program or apprenticeship; licensing requirements vary",
+      interests: { repair: 0.45, technology: 0.2, science: 0.15, help: 0.1, delivery: 0.1 },
+      abilities: { practical: 0.25, planning: 0.2, safety: 0.2, learning: 0.15, detail: 0.1, communication: 0.1 },
+      env: { pace: 2, people: 2, structure: 2, setting: 2, schedule: 3, emotion: 1 },
+      tags: ["noise", "lifting", "standing", "driving", "outdoors", "chemicals", "weekends"],
+      watch: "Service calls require driving, customer contact, temperature extremes, confined spaces, and occasional urgent work.",
+      url: "https://www.onetonline.org/link/summary/49-9021.00"
+    },
+    {
+      tier: "training",
+      family: "Agriculture and food",
+      market: "strong",
+      search: "food quality safety technician",
+      title: "Food quality or safety technician",
+      training: "Employer training or a certificate in food safety, quality, or laboratory methods",
+      interests: { food: 0.3, science: 0.3, records: 0.2, organize: 0.1, technology: 0.1 },
+      abilities: { detail: 0.25, safety: 0.2, learning: 0.15, numbers: 0.15, consistency: 0.1, technology: 0.1, communication: 0.05 },
+      env: { pace: 2, people: 2, structure: 1, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["standing", "chemicals", "weekends"],
+      watch: "This may involve protective clothing, cold production areas, sampling, sanitation rules, and documenting problems others must correct.",
+      url: "https://www.onetonline.org/link/summary/19-4013.00"
+    },
+    {
+      tier: "training",
+      family: "Facilities and maintenance",
+      market: "regular",
+      search: "water wastewater operator",
+      title: "Water or wastewater treatment operator",
+      training: "GED plus employer training and state certification; requirements vary by facility",
+      interests: { maintain: 0.3, science: 0.25, technology: 0.2, repair: 0.15, records: 0.1 },
+      abilities: { safety: 0.2, detail: 0.2, practical: 0.15, technology: 0.15, numbers: 0.1, planning: 0.1, learning: 0.1 },
+      env: { pace: 2, people: 1, structure: 1, setting: 2, schedule: 3, emotion: 1 },
+      tags: ["chemicals", "standing", "outdoors", "weekends"],
+      watch: "The work is structured and important, but certification study, odors, chemicals, outdoor checks, and on-call schedules may be required.",
+      url: "https://www.onetonline.org/link/summary/51-8031.00"
+    },
+    {
+      tier: "training",
+      family: "Plants and grounds",
+      market: "regular",
+      search: "irrigation landscape technician",
+      title: "Irrigation or landscape technician",
+      training: "Employer training or a short landscape, irrigation, or equipment program",
+      interests: { plants: 0.35, repair: 0.3, maintain: 0.2, technology: 0.1, delivery: 0.05 },
+      abilities: { practical: 0.25, planning: 0.15, safety: 0.15, learning: 0.15, detail: 0.1, technology: 0.1, consistency: 0.1 },
+      env: { pace: 2, people: 2, structure: 2, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["lifting", "standing", "outdoors", "driving", "noise"],
+      watch: "The work is seasonal and physical, with driving, weather, digging, and changing job sites.",
+      url: "https://www.onetonline.org/link/summary/37-3011.00"
+    },
+    {
+      tier: "long",
+      family: "Healthcare support",
+      market: "strong",
+      search: "medical laboratory technician",
+      title: "Medical laboratory technician",
+      training: "Usually an associate degree plus certification or state/employer requirements",
+      interests: { health: 0.4, science: 0.35, records: 0.15, technology: 0.1 },
+      abilities: { detail: 0.25, learning: 0.2, safety: 0.2, numbers: 0.1, technology: 0.1, consistency: 0.1, planning: 0.05 },
+      env: { pace: 2, people: 1, structure: 1, setting: 1, schedule: 2, emotion: 1 },
+      tags: ["injury", "chemicals", "standing", "weekends"],
+      watch: "This path requires science coursework and safe handling of blood and other specimens, even when patient contact is limited.",
+      url: "https://www.onetonline.org/link/summary/29-2010.00"
+    },
+    {
+      tier: "long",
+      family: "Healthcare support",
+      market: "strong",
+      search: "radiologic technologist",
+      title: "Radiologic technologist",
+      training: "Usually an associate degree plus certification and Wisconsin licensing",
+      interests: { health: 0.4, technology: 0.25, help: 0.2, science: 0.15 },
+      abilities: { detail: 0.2, safety: 0.2, communication: 0.2, learning: 0.15, practical: 0.1, steadiness: 0.1, technology: 0.05 },
+      env: { pace: 3, people: 3, structure: 1, setting: 2, schedule: 3, emotion: 2 },
+      tags: ["injury", "standing", "lifting", "weekends"],
+      watch: "The work includes close patient contact, positioning people who may be in pain, hospital pace, and possible evening or weekend shifts.",
+      url: "https://www.onetonline.org/link/summary/29-2034.00"
+    },
+    {
+      tier: "long",
+      family: "Education and community support",
+      market: "strong",
+      search: "occupational therapy assistant",
+      title: "Occupational therapy assistant",
+      training: "Usually an accredited associate degree plus certification and state licensing",
+      interests: { help: 0.4, health: 0.25, teach: 0.2, creative: 0.1, science: 0.05 },
+      abilities: { communication: 0.25, steadiness: 0.2, practical: 0.15, learning: 0.15, planning: 0.1, adaptability: 0.1, detail: 0.05 },
+      env: { pace: 2, people: 3, structure: 2, setting: 2, schedule: 2, emotion: 2 },
+      tags: ["standing", "lifting", "injury", "conflict"],
+      watch: "This is sustained people-focused work involving physical assistance, encouragement, documentation, and emotionally difficult days.",
+      url: "https://www.onetonline.org/link/summary/31-2011.00"
+    },
+    {
+      tier: "long",
+      family: "Skilled trades and repair",
+      market: "strong",
+      search: "electrical electronics technician",
+      title: "Electrical or electronics technician",
+      training: "Usually an associate degree or technical diploma",
+      interests: { technology: 0.3, repair: 0.3, make: 0.2, science: 0.15, records: 0.05 },
+      abilities: { practical: 0.2, technology: 0.2, detail: 0.15, numbers: 0.15, safety: 0.15, learning: 0.1, planning: 0.05 },
+      env: { pace: 2, people: 2, structure: 1, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["standing", "noise", "chemicals"],
+      watch: "Programs include algebra and electronics theory; work settings range from quiet test benches to busy production floors.",
+      url: "https://www.onetonline.org/link/summary/17-3023.00"
+    },
+    {
+      tier: "long",
+      family: "Manufacturing and quality",
+      market: "strong",
+      search: "industrial engineering technician manufacturing",
+      title: "Industrial engineering technologist or technician",
+      training: "Usually an associate degree or technical diploma",
+      interests: { make: 0.25, technology: 0.25, records: 0.2, organize: 0.15, repair: 0.15 },
+      abilities: { planning: 0.2, technology: 0.2, detail: 0.15, numbers: 0.15, learning: 0.15, communication: 0.1, practical: 0.05 },
+      env: { pace: 2, people: 2, structure: 2, setting: 2, schedule: 1, emotion: 1 },
+      tags: ["noise", "standing", "screens"],
+      watch: "The work mixes computer analysis, production-floor observation, measurements, and explaining process changes to others.",
+      url: "https://www.onetonline.org/link/summary/17-3026.00"
+    },
+    {
+      tier: "long",
+      family: "Records and administration",
+      market: "regular",
+      search: "paralegal legal assistant",
+      title: "Paralegal or legal assistant",
+      training: "Often an associate degree or postsecondary certificate",
+      interests: { records: 0.45, organize: 0.2, help: 0.15, technology: 0.1, science: 0.1 },
+      abilities: { detail: 0.25, learning: 0.2, technology: 0.15, planning: 0.15, communication: 0.15, consistency: 0.1 },
+      env: { pace: 2, people: 2, structure: 1, setting: 1, schedule: 1, emotion: 2 },
+      tags: ["screens", "conflict"],
+      watch: "Deadlines, dense reading, client problems, and changing requests can make some legal offices more intense than the orderly records suggest.",
+      url: "https://www.onetonline.org/link/summary/23-2011.00"
+    },
+    {
+      tier: "long",
+      family: "Technology and data",
+      market: "regular",
+      search: "surveying mapping GIS technician",
+      title: "Surveying, mapping, or GIS technician",
+      training: "Often an associate degree, certificate, or strong technical coursework",
+      interests: { technology: 0.3, records: 0.2, plants: 0.15, science: 0.15, delivery: 0.1, organize: 0.1 },
+      abilities: { technology: 0.2, detail: 0.2, numbers: 0.15, planning: 0.15, learning: 0.1, practical: 0.1, safety: 0.1 },
+      env: { pace: 2, people: 2, structure: 2, setting: 2, schedule: 1, emotion: 1 },
+      tags: ["screens", "outdoors", "driving", "standing"],
+      watch: "Some roles are mostly computer mapping; others require driving, field measurements, rough terrain, and variable weather.",
+      url: "https://www.onetonline.org/link/summary/17-3031.00"
+    },
+    {
+      tier: "long",
+      family: "Creative production",
+      market: "narrow",
+      search: "graphic designer production artist",
+      title: "Graphic designer or production artist",
+      training: "A strong portfolio plus certificate, associate degree, or bachelor's degree is common",
+      interests: { creative: 0.5, technology: 0.25, records: 0.1, help: 0.1, make: 0.05 },
+      abilities: { technology: 0.25, detail: 0.2, planning: 0.15, learning: 0.15, communication: 0.15, adaptability: 0.1 },
+      env: { pace: 2, people: 2, structure: 2, setting: 1, schedule: 1, emotion: 1 },
+      tags: ["screens", "conflict"],
+      watch: "The creative work also includes software mastery, feedback, revisions, deadlines, and a competitive portfolio-based job market.",
+      url: "https://www.onetonline.org/link/summary/27-1024.00"
+    },
+    {
+      tier: "long",
+      family: "Technology and data",
+      market: "regular",
+      search: "web digital interface designer",
+      title: "Web or digital interface designer",
+      training: "A portfolio plus substantial coursework or a degree is common",
+      interests: { technology: 0.45, creative: 0.3, help: 0.1, records: 0.1, science: 0.05 },
+      abilities: { technology: 0.25, learning: 0.2, planning: 0.15, detail: 0.15, communication: 0.15, adaptability: 0.1 },
+      env: { pace: 2, people: 2, structure: 2, setting: 1, schedule: 1, emotion: 1 },
+      tags: ["screens", "conflict"],
+      watch: "The work is screen-heavy and changes quickly; projects require feedback, troubleshooting, ongoing learning, and deadline management.",
+      url: "https://www.onetonline.org/link/summary/15-1255.00"
+    }
+  ];
+
+  const jobs = [
+    ...baseJobs.map((job) => ({ ...job, ...baseJobMeta[job.title] })),
+    ...expandedJobs
+  ];
+
+  const localMarketMeta = {
+    strong: {
+      label: "Often seen locally",
+      detail: "This work family commonly appears across River Falls, western Wisconsin, and the eastern Twin Cities."
+    },
+    regular: {
+      label: "Regular but employer-dependent",
+      detail: "Nearby openings appear, but schedule, setting, and exact duties vary enough that each posting should be checked."
+    },
+    narrow: {
+      label: "Specialized local market",
+      detail: "This path exists within the wider 50-mile area, but openings are fewer or more competitive."
+    }
+  };
 
   const state = {
     view: "intro",
@@ -1619,12 +2158,12 @@ svg {
           <div>
             <span class="viz-badge">About 15–20 minutes</span>
             <h2>Find work that fits how you actually work</h2>
-            <p>This quiz looks at strengths, situations that cost you energy, preferred work conditions, and job interests. It includes a few short practical exercises, but nothing is timed.</p>
+            <p>This quiz looks at strengths, situations that cost you energy, preferred work conditions, and job interests. It includes several realistic work situations and two short practical exercises, but nothing is timed. Results compare your answers with 54 paths across 13 career families.</p>
           </div>
           <div class="wff-note">
             <p><strong>There are no perfect answers.</strong> “Not sure yet” is allowed. The result is a starting point for exploration, not an intelligence test, diagnosis, or final decision.</p>
           </div>
-          <p class="text-muted">Your answers stay in this page while it is open. They are not sent or saved anywhere.</p>
+          <p class="text-muted">Your answers stay in this page while it is open. They are not sent anywhere or saved automatically.</p>
         </div>
         <div class="wff-actions wff-no-print">
           <span></span>
@@ -1666,7 +2205,7 @@ svg {
           </label>
         `).join("")}
       </div>
-      <p class="text-small text-muted">Selected: ${state.interests.size} of 3–5</p>
+      <p class="text-small text-muted">Selected: ${state.interests.size} of 3–6</p>
     `;
   }
 
@@ -1734,8 +2273,8 @@ svg {
   function canContinue(question) {
     state.error = "";
     if (question.type === "interests") {
-      if (state.interests.size < 3 || state.interests.size > 5) {
-        state.error = "Choose between 3 and 5 activities before continuing.";
+      if (state.interests.size < 3 || state.interests.size > 6) {
+        state.error = "Choose between 3 and 6 activities before continuing.";
         return false;
       }
       return true;
@@ -1822,6 +2361,27 @@ svg {
     return "Worth exploring";
   }
 
+  function localSearchUrl(job) {
+    const query = encodeURIComponent(job.search || job.title);
+    return `https://www.indeed.com/jobs?q=${query}&l=River%20Falls%2C%20WI&radius=50`;
+  }
+
+  function selectedTierJobs(tier, scoredJobs, limit = 5) {
+    const candidates = scoredJobs.filter((job) => job.tier === tier);
+    const selected = [];
+    const familyCounts = {};
+    for (let familyLimit = 1; selected.length < limit && familyLimit <= limit; familyLimit += 1) {
+      candidates.forEach((job) => {
+        if (selected.length >= limit || selected.includes(job)) return;
+        const family = job.family || "Other paths";
+        if ((familyCounts[family] || 0) >= familyLimit) return;
+        selected.push(job);
+        familyCounts[family] = (familyCounts[family] || 0) + 1;
+      });
+    }
+    return selected;
+  }
+
   function environmentSummary() {
     const phrases = {
       pace: {
@@ -1882,17 +2442,22 @@ svg {
   }
 
   function tierJobsHtml(tier, dimensions, scoredJobs) {
-    const tierJobs = scoredJobs.filter((job) => job.tier === tier).slice(0, 4);
+    const tierJobs = selectedTierJobs(tier, scoredJobs);
     return tierJobs.map((job) => `
       <article class="wff-job">
         <div class="wff-job-heading">
           <h3>${escapeHtml(job.title)}</h3>
           <span class="viz-badge">${escapeHtml(signalLabel(job.score, job.conflicts))}</span>
         </div>
+        <p><strong>Career family:</strong> ${escapeHtml(job.family)}</p>
         <p><strong>Preparation:</strong> ${escapeHtml(job.training)}</p>
         <p>${escapeHtml(matchedStrengths(job, dimensions))}</p>
+        <p><strong>Local market:</strong> ${escapeHtml(localMarketMeta[job.market].label)}. ${escapeHtml(localMarketMeta[job.market].detail)}</p>
         <p class="text-muted"><strong>Check before committing:</strong> ${escapeHtml(conflictText(job))}</p>
-        <a class="wff-source-link" href="${escapeHtml(job.url)}" target="_blank" rel="noreferrer">Explore this occupation in O*NET</a>
+        <div class="wff-link-row">
+          <a class="wff-source-link" href="${escapeHtml(localSearchUrl(job))}" target="_blank" rel="noreferrer">Search jobs within 50 miles</a>
+          <a class="wff-source-link" href="${escapeHtml(job.url)}" target="_blank" rel="noreferrer">Explore in O*NET</a>
+        </div>
       </article>
     `).join("");
   }
@@ -1900,7 +2465,7 @@ svg {
   function resultSummaryText(dimensions, scoredJobs) {
     const strengths = Object.entries(dimensions).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const strains = Object.entries(dimensions).sort((a, b) => a[1] - b[1]).filter(([, score]) => score < 65).slice(0, 2);
-    const topByTier = ["now", "training", "long"].map((tier) => scoredJobs.find((job) => job.tier === tier));
+    const tierLabels = { now: "Possible now", training: "Short training", long: "Longer path" };
     const lines = [
       "WORK FIT FINDER — RESULT SUMMARY",
       "",
@@ -1913,11 +2478,70 @@ svg {
       "Possible strain points:",
       ...(strains.length ? strains.map(([dim]) => `- ${dimensionMeta[dim].strain}`) : ["- No strong strain signal appeared in these answers."]),
       "",
-      "Leading paths:",
-      ...topByTier.filter(Boolean).map((job) => `- ${job.title} (${job.training})`)
+      "Leading paths by preparation level:"
     ];
+    Object.entries(tierLabels).forEach(([tier, label]) => {
+      lines.push(label + ":");
+      selectedTierJobs(tier, scoredJobs).forEach((job) => {
+        lines.push(`- ${job.title} — ${job.family}; ${localMarketMeta[job.market].label}; ${job.training}`);
+        lines.push(`  Current 50-mile search: ${localSearchUrl(job)}`);
+      });
+    });
     if (state.note.trim()) lines.push("", `Something people rely on me for: ${state.note.trim()}`);
     lines.push("", "This result is an exploration guide, not a diagnosis or final career decision.");
+    return lines.join("\n");
+  }
+
+  function answerText(question) {
+    if (question.type === "interests") {
+      const selected = Object.entries(interestMeta)
+        .filter(([id]) => state.interests.has(id))
+        .map(([, label]) => label);
+      return selected.length ? selected.join("; ") : "None selected";
+    }
+    if (question.type === "limits") {
+      const selected = hardNoOptions
+        .filter((option) => state.hardNos.has(option.id))
+        .map((option) => option.label);
+      return selected.length ? selected.join("; ") : "No firm limits marked";
+    }
+    const value = state.answers[question.id];
+    const options = question.type === "likert" ? likertOptions : question.options;
+    const selected = options.find((option) => option.value === value);
+    return selected ? selected.label : "No answer";
+  }
+
+  function answerReviewHtml() {
+    let currentSection = "";
+    return questions.map((question) => {
+      const sectionHeading = question.section !== currentSection
+        ? `<h3>${escapeHtml(question.section)}</h3>`
+        : "";
+      currentSection = question.section;
+      return `
+        ${sectionHeading}
+        <div class="wff-answer-review-item">
+          <strong>${escapeHtml(question.prompt)}</strong>
+          <span>${escapeHtml(answerText(question))}</span>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function fullReportText(dimensions, scoredJobs) {
+    const lines = [resultSummaryText(dimensions, scoredJobs), "", "FULL ANSWER REVIEW"];
+    let currentSection = "";
+    questions.forEach((question) => {
+      if (question.section !== currentSection) {
+        currentSection = question.section;
+        lines.push("", currentSection.toUpperCase());
+      }
+      lines.push(`Question: ${question.prompt}`, `Answer: ${answerText(question)}`, "");
+    });
+    if (state.note.trim()) {
+      lines.push("OPTIONAL NOTE", `People often rely on me to: ${state.note.trim()}`, "");
+    }
+    lines.push("Report created locally by Work Fit Finder. No answers were transmitted or stored by the site.");
     return lines.join("\n");
   }
 
@@ -1980,7 +2604,7 @@ svg {
         <section class="card wff-result-section" aria-labelledby="wff-job-heading">
           <div>
             <h3 id="wff-job-heading">Career and job leads</h3>
-            <p class="text-muted">These are ranked by interests, work skills, preferred environment, and conditions you marked to avoid.</p>
+            <p class="text-muted">These are ranked by interests, work skills, preferred environment, and conditions you marked to avoid. To prevent a narrow list, the leads include several career families before repeating one. Local availability is shown separately and does not change personal-fit scores.</p>
           </div>
           <div class="wff-tabs wff-no-print" role="tablist" aria-label="Career preparation level">
             ${Object.entries(tierLabels).map(([tier, label]) => `
@@ -2006,18 +2630,33 @@ svg {
           </ol>
         </section>
 
+        <p class="text-small text-muted">Local-market labels are regional guidance for the area within about 50 miles of River Falls and were reviewed in July 2026. Openings change, so use each live search link before choosing a path.</p>
+        <div class="wff-link-row">
+          <a class="wff-source-link" href="https://dwd.wisconsin.gov/det/jobseeker.htm" target="_blank" rel="noreferrer">Wisconsin career and job tools</a>
+          <a class="wff-source-link" href="https://mn.gov/deed/data/data-tools/oid/" target="_blank" rel="noreferrer">Twin Cities occupation demand</a>
+        </div>
+
+        <section class="card wff-result-section wff-print-only" aria-labelledby="wff-answer-review-heading">
+          <h2 id="wff-answer-review-heading">Complete answer review</h2>
+          <div class="wff-answer-review-list">
+            ${answerReviewHtml()}
+          </div>
+        </section>
+
         <div class="wff-actions wff-no-print">
           <button class="btn btn-ghost" type="button" data-action="restart">Start over</button>
           <div class="wff-actions-end">
             <button class="btn" type="button" data-action="copy">Copy summary</button>
+            <button class="btn" type="button" data-action="download">Download full report</button>
             <button class="btn btn-primary" type="button" data-action="print">Print or save as PDF</button>
           </div>
         </div>
-        <p class="text-small text-muted">Career descriptions link to O*NET. Education requirements and work conditions vary by employer and location. Results are not stored after this page closes.</p>
+        <p class="text-small text-muted">Career descriptions link to O*NET. Education requirements and work conditions vary by employer and location. Results are not stored automatically; download or print the report before closing the page.</p>
       </div>
     `;
 
     root.dataset.summary = resultSummaryText(dimensions, scoredJobs);
+    root.dataset.fullReport = fullReportText(dimensions, scoredJobs);
   }
 
   function renderPause() {
@@ -2132,6 +2771,21 @@ svg {
       } catch (error) {
         button.textContent = "Copy unavailable";
       }
+      return;
+    }
+
+    if (action === "download") {
+      const report = root.dataset.fullReport || "";
+      const blob = new Blob([report], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `work-fit-finder-results-${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      button.textContent = "Full report downloaded";
       return;
     }
 
