@@ -1,0 +1,2407 @@
+<!doctype html>
+<html lang="en" data-visualize-standalone>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Work Fit Finder</title>
+<style>:root {
+  color-scheme: light dark;
+  background-color: transparent !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --main-surface-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: light-dark(rgb(26 28 31), rgb(255 255 255));
+  --card: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --card-foreground: var(--foreground);
+  --popover: light-dark(rgb(255 255 255), rgb(45 45 45));
+  --popover-foreground: var(--foreground);
+  --primary: light-dark(rgb(51 156 255), rgb(131 195 255));
+  --primary-foreground: light-dark(rgb(255 255 255), rgb(13 13 13));
+  --secondary: light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%));
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: light-dark(
+    rgb(26 28 31 / 49.4%),
+    rgb(255 255 255 / 49.8%)
+  );
+  --accent: light-dark(rgb(229 242 255), rgb(13 39 63));
+  --accent-foreground: var(--primary);
+  --destructive: light-dark(rgb(226 85 7), rgb(255 133 73));
+  --border: light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%));
+  --input: light-dark(
+    rgb(26 28 31 / 11.8%),
+    color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+  );
+  --ring: light-dark(rgb(51 156 255), rgb(131 195 255 / 76%));
+  --font-size-base: 14px;
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: 10px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z'/%3E%3C/svg%3E");
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+  --color-background-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-border-secondary: var(--border);
+}
+
+:root[data-visualize-standalone] {
+  background-color: var(--background) !important;
+}
+
+/* Generic mobile code-block hosts provide light/dark mode but no series palette.
+   AppBlock hosts set all six variables themselves. */
+:root:not([data-app-block-surface]) {
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(#f3883b, #f59a56);
+  --viz-series-3: light-dark(#5dc977, #74d58b);
+  --viz-series-4: light-dark(#eb77b1, #f08fc0);
+  --viz-series-5: light-dark(#9b79ec, #aa91ef);
+  --viz-series-6: light-dark(#3ab9b1, #5acbc2);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html > body {
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+:root:not([data-app-block-surface]) > body {
+  padding: 12px;
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--viz-font-weight-medium);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget > :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-legend,
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls > .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls > .form-label > :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type="checkbox"]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: "";
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type="radio"]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: "";
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed="true"],
+    [aria-selected="true"],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed="true"], [aria-selected="true"], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget > svg {
+  width: 100%;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+</style>
+</head>
+<body>
+<div id="work-fit-finder-app" aria-live="polite"></div>
+
+<style>
+  #work-fit-finder-app {
+    color: var(--foreground);
+    width: 100%;
+  }
+
+  #work-fit-finder-app .wff-shell {
+    display: grid;
+    gap: 1rem;
+  }
+
+  #work-fit-finder-app .wff-progress-track {
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    height: 0.6rem;
+    overflow: hidden;
+  }
+
+  #work-fit-finder-app .wff-progress-bar {
+    background: var(--primary);
+    height: 100%;
+    transition: width 180ms ease;
+  }
+
+  #work-fit-finder-app .wff-progress-meta {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  #work-fit-finder-app .wff-question {
+    display: grid;
+    gap: 1rem;
+    min-height: 15rem;
+  }
+
+  #work-fit-finder-app .wff-choice-list {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  #work-fit-finder-app .wff-choice {
+    justify-content: flex-start;
+    text-align: left;
+    white-space: normal;
+    width: 100%;
+  }
+
+  #work-fit-finder-app .wff-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+  }
+
+  #work-fit-finder-app .wff-actions-end {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-left: auto;
+  }
+
+  #work-fit-finder-app .wff-check-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #work-fit-finder-app .wff-check-item {
+    align-items: flex-start;
+    border: 1px solid var(--border);
+    border-radius: 0.65rem;
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.8rem;
+  }
+
+  #work-fit-finder-app .wff-check-item:has(input:checked) {
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border-color: var(--primary);
+  }
+
+  #work-fit-finder-app .wff-check-item input {
+    margin-top: 0.2rem;
+  }
+
+  #work-fit-finder-app .wff-result-section {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  #work-fit-finder-app .wff-signal-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  #work-fit-finder-app .wff-signal {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  #work-fit-finder-app .wff-meter {
+    background: var(--muted);
+    border-radius: 999px;
+    height: 0.5rem;
+    overflow: hidden;
+  }
+
+  #work-fit-finder-app .wff-meter-fill {
+    background: var(--viz-series-1);
+    height: 100%;
+  }
+
+  #work-fit-finder-app .wff-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  #work-fit-finder-app .wff-job-list {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  #work-fit-finder-app .wff-job {
+    border-top: 1px solid var(--border);
+    display: grid;
+    gap: 0.45rem;
+    padding-top: 0.8rem;
+  }
+
+  #work-fit-finder-app .wff-job:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  #work-fit-finder-app .wff-job-heading {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: space-between;
+  }
+
+  #work-fit-finder-app .wff-summary-grid {
+    display: grid;
+    gap: 0.8rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #work-fit-finder-app .wff-note {
+    border-left: 3px solid var(--viz-series-1);
+    padding-left: 0.8rem;
+  }
+
+  #work-fit-finder-app .wff-error {
+    min-height: 1.5rem;
+  }
+
+  #work-fit-finder-app .wff-source-link {
+    width: fit-content;
+  }
+
+  @media (max-width: 560px) {
+    #work-fit-finder-app .wff-check-grid,
+    #work-fit-finder-app .wff-summary-grid {
+      grid-template-columns: 1fr;
+    }
+
+    #work-fit-finder-app .wff-question {
+      min-height: 0;
+    }
+
+    #work-fit-finder-app .wff-actions,
+    #work-fit-finder-app .wff-actions-end {
+      align-items: stretch;
+      flex-direction: column-reverse;
+      margin-left: 0;
+      width: 100%;
+    }
+
+    #work-fit-finder-app .wff-actions .btn,
+    #work-fit-finder-app .wff-actions-end .btn {
+      width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #work-fit-finder-app .wff-progress-bar {
+      transition: none;
+    }
+  }
+
+  @media print {
+    #work-fit-finder-app .wff-no-print {
+      display: none !important;
+    }
+
+    #work-fit-finder-app .wff-job-list {
+      break-inside: avoid;
+    }
+
+    #work-fit-finder-app .wff-tier-panel[hidden] {
+      display: grid !important;
+    }
+
+    #work-fit-finder-app .wff-tier-panel + .wff-tier-panel {
+      border-top: 1px solid var(--border);
+      margin-top: 1rem;
+      padding-top: 1rem;
+    }
+  }
+</style>
+
+<script>
+(() => {
+  const root = document.getElementById("work-fit-finder-app");
+  if (!root) return;
+
+  const dimensionMeta = {
+    detail: {
+      label: "Observation and accuracy",
+      strength: "You tend to notice details and catch mismatches.",
+      strain: "Detailed checking may take extra effort or need a checklist."
+    },
+    consistency: {
+      label: "Routine and follow-through",
+      strength: "You can stay with necessary tasks and repeat a useful routine.",
+      strain: "Long or repetitive tasks may be easier with visible milestones."
+    },
+    learning: {
+      label: "Learning clear procedures",
+      strength: "You learn workable steps and use clarification well.",
+      strain: "New procedures may need demonstration, written steps, or repetition."
+    },
+    adaptability: {
+      label: "Switching and sudden change",
+      strength: "You can redirect your attention when priorities change.",
+      strain: "Unexpected changes may cost energy and require recovery time."
+    },
+    communication: {
+      label: "Clarifying and communicating",
+      strength: "You can surface missing information and keep work coordinated.",
+      strain: "Fast or unclear conversations may make it harder to get what you need."
+    },
+    steadiness: {
+      label: "Staying steady under pressure",
+      strength: "You can keep thinking when another person or the situation is tense.",
+      strain: "Conflict, urgency, or visible frustration may quickly drain your capacity."
+    },
+    practical: {
+      label: "Hands-on judgment",
+      strength: "You make sensible choices with physical tasks, tools, and sequences.",
+      strain: "Hands-on work may be easier after demonstration and practice."
+    },
+    numbers: {
+      label: "Numbers and records",
+      strength: "You can track quantities and written records accurately.",
+      strain: "Number-heavy work may need calculators, templates, or a slower review."
+    },
+    safety: {
+      label: "Safety and decision-making",
+      strength: "You tend to pause, check, and protect the work before acting.",
+      strain: "Unclear or rushed situations may make safe decisions harder."
+    }
+  };
+
+  const interestMeta = {
+    animals: "caring for or training animals",
+    plants: "growing plants or working outdoors",
+    organize: "organizing supplies or keeping spaces orderly",
+    records: "records, lists, or computer-based information",
+    repair: "fixing, building, or using tools",
+    maintain: "cleaning and maintaining useful spaces",
+    help: "helping one person at a time",
+    creative: "making, designing, or arranging things",
+    science: "observing, testing, or learning how living things work",
+    delivery: "moving, stocking, or delivering materials"
+  };
+
+  const questions = [
+    {
+      id: "routine",
+      type: "likert",
+      section: "How you work",
+      prompt: "I can follow the same useful routine day after day without losing track of steps.",
+      helper: "Answer for an ordinary day, not your best or worst day.",
+      dims: { consistency: 1, safety: 0.2 }
+    },
+    {
+      id: "notice",
+      type: "likert",
+      section: "How you work",
+      prompt: "I notice small changes in objects, animals, written information, or my surroundings.",
+      dims: { detail: 1 }
+    },
+    {
+      id: "learn_steps",
+      type: "likert",
+      section: "How you work",
+      prompt: "After someone demonstrates a task clearly, I can remember and repeat the steps.",
+      dims: { learning: 1, practical: 0.3 }
+    },
+    {
+      id: "records",
+      type: "likert",
+      section: "How you work",
+      prompt: "I can keep names, amounts, dates, or other records accurate.",
+      dims: { numbers: 0.7, detail: 0.7 }
+    },
+    {
+      id: "switching",
+      type: "likert",
+      section: "How you work",
+      prompt: "When plans change suddenly, I can usually switch tasks without needing much recovery time.",
+      dims: { adaptability: 1, steadiness: 0.2 }
+    },
+    {
+      id: "clarify",
+      type: "likert",
+      section: "How you work",
+      prompt: "If instructions are unclear, I can ask a specific question before continuing.",
+      dims: { communication: 1, learning: 0.4, safety: 0.3 }
+    },
+    {
+      id: "tension",
+      type: "likert",
+      section: "How you work",
+      prompt: "When another person is upset, I can usually keep my own voice and thinking steady.",
+      dims: { steadiness: 1, communication: 0.3 }
+    },
+    {
+      id: "finish",
+      type: "likert",
+      section: "How you work",
+      prompt: "I finish necessary tasks even when they are repetitive or not especially interesting.",
+      dims: { consistency: 1 }
+    },
+    {
+      id: "tools",
+      type: "likert",
+      section: "How you work",
+      prompt: "After proper instruction, I can use basic tools or equipment safely.",
+      dims: { practical: 1, safety: 0.4, learning: 0.2 }
+    },
+    {
+      id: "breaks",
+      type: "likert",
+      section: "How you work",
+      prompt: "I can usually tell when I need a short break before stress starts causing mistakes.",
+      dims: { safety: 0.8, steadiness: 0.6 }
+    },
+    {
+      id: "pace",
+      type: "environment",
+      section: "Your best work setting",
+      prompt: "Which work pace usually brings out your best work?",
+      options: [
+        { value: 1, label: "A steady, predictable pace" },
+        { value: 2, label: "Busy periods when priorities are clear" },
+        { value: 3, label: "Frequent urgency and rapid decisions" },
+        { value: null, label: "I am not sure yet" }
+      ]
+    },
+    {
+      id: "people",
+      type: "environment",
+      section: "Your best work setting",
+      prompt: "How much interaction would you prefer during most of the workday?",
+      options: [
+        { value: 1, label: "Mostly independent work" },
+        { value: 2, label: "A small, familiar team" },
+        { value: 3, label: "Frequent contact with customers or many coworkers" },
+        { value: null, label: "I am not sure yet" }
+      ]
+    },
+    {
+      id: "structure",
+      type: "environment",
+      section: "Your best work setting",
+      prompt: "What kind of instructions help you work confidently?",
+      options: [
+        { value: 1, label: "Clear steps, examples, or a checklist" },
+        { value: 2, label: "A clear goal with some choice in how to do it" },
+        { value: 3, label: "Changing verbal directions throughout the day" },
+        { value: null, label: "I am not sure yet" }
+      ]
+    },
+    {
+      id: "setting",
+      type: "environment",
+      section: "Your best work setting",
+      prompt: "Which physical setting sounds most sustainable?",
+      options: [
+        { value: 1, label: "A quieter indoor space" },
+        { value: 2, label: "Outdoors or active work with room to move" },
+        { value: 3, label: "A busy setting with frequent noise and activity" },
+        { value: null, label: "I am not sure yet" }
+      ]
+    },
+    {
+      id: "schedule",
+      type: "environment",
+      section: "Your best work setting",
+      prompt: "Which schedule would be easiest to maintain?",
+      options: [
+        { value: 1, label: "The same hours and routine most days" },
+        { value: 2, label: "Some planned variation" },
+        { value: 3, label: "Shifts or priorities that often change" },
+        { value: null, label: "I am not sure yet" }
+      ]
+    },
+    {
+      id: "emotion",
+      type: "environment",
+      section: "Your best work setting",
+      prompt: "How much emotional intensity could you reasonably handle at work?",
+      helper: "This includes conflict, distressed people, injured animals, or emergencies.",
+      options: [
+        { value: 1, label: "Very little; I do best in a calm setting" },
+        { value: 2, label: "Occasional difficult moments with time to recover" },
+        { value: 3, label: "Frequent difficult situations" },
+        { value: null, label: "I am not sure yet" }
+      ]
+    },
+    {
+      id: "interests",
+      type: "interests",
+      section: "What interests you",
+      prompt: "Choose 3 to 5 kinds of work that sound most satisfying.",
+      helper: "Choose the activities themselves, not the ones that sound most impressive."
+    },
+    {
+      id: "scenario_log",
+      type: "scenario",
+      section: "Work situations",
+      prompt: "A feeding amount on the daily board does not match the amount on an animal's individual card. What would you be most likely to do?",
+      helper: "Choose what you would actually do, not what seems like the test answer.",
+      options: [
+        {
+          value: "compare",
+          label: "Pause, compare both records, and confirm the correct amount before feeding",
+          scores: { detail: 5, safety: 5, communication: 4 }
+        },
+        {
+          value: "board",
+          label: "Use the daily board because it is the newest item",
+          scores: { detail: 2, safety: 2, communication: 1 }
+        },
+        {
+          value: "guess",
+          label: "Use the amount that seems most reasonable",
+          scores: { detail: 1, safety: 1, communication: 1 }
+        }
+      ]
+    },
+    {
+      id: "scenario_switch",
+      type: "scenario",
+      section: "Work situations",
+      prompt: "You are halfway through cleaning an area when a supervisor gives you a different task marked urgent. What would you be most likely to do?",
+      options: [
+        {
+          value: "secure_ask",
+          label: "Leave the area safe, then confirm which task should be completed first",
+          scores: { adaptability: 5, safety: 5, communication: 5, steadiness: 4 }
+        },
+        {
+          value: "drop",
+          label: "Switch immediately, even if the first area is left unfinished or unsafe",
+          scores: { adaptability: 4, safety: 1, communication: 2, steadiness: 2 }
+        },
+        {
+          value: "ignore",
+          label: "Finish the entire first task without responding",
+          scores: { adaptability: 1, safety: 3, communication: 1, steadiness: 2 }
+        }
+      ]
+    },
+    {
+      id: "scenario_unclear",
+      type: "scenario",
+      section: "Work situations",
+      prompt: "A coworker gives you several verbal directions, but two steps are unclear. What would you be most likely to do?",
+      options: [
+        {
+          value: "repeat",
+          label: "Repeat back what you understood and ask about the two missing steps",
+          scores: { communication: 5, learning: 5, safety: 4 }
+        },
+        {
+          value: "start",
+          label: "Start with what you remember and figure out the rest as you go",
+          scores: { communication: 2, learning: 3, safety: 2 }
+        },
+        {
+          value: "wait",
+          label: "Wait without saying anything until someone notices",
+          scores: { communication: 1, learning: 1, safety: 2 }
+        }
+      ]
+    },
+    {
+      id: "scenario_customer",
+      type: "scenario",
+      section: "Work situations",
+      prompt: "A customer is angry about a delay that you did not cause. What would you be most likely to do?",
+      options: [
+        {
+          value: "calm_lead",
+          label: "Give a short factual response and get a lead if the person keeps escalating",
+          scores: { steadiness: 5, communication: 5, safety: 4 }
+        },
+        {
+          value: "argue",
+          label: "Explain firmly why the customer is being unfair",
+          scores: { steadiness: 1, communication: 2, safety: 2 }
+        },
+        {
+          value: "leave",
+          label: "Leave without telling anyone because the situation is too much",
+          scores: { steadiness: 2, communication: 1, safety: 2 }
+        }
+      ]
+    },
+    {
+      id: "task_detail",
+      type: "task",
+      section: "Short practical exercises",
+      prompt: "Which item needs to be checked before feeding?",
+      helper: "Daily board: Poppy — 1 cup — blue bowl. Milo — 3/4 cup — green bowl. Hazel — 1/2 cup — red bowl. Milo's individual card says 1/2 cup — green bowl.",
+      options: [
+        { value: "poppy", label: "Poppy's bowl color", scores: { detail: 1, safety: 2 } },
+        { value: "milo", label: "Milo's food amount", scores: { detail: 5, safety: 5 } },
+        { value: "hazel", label: "Hazel's food amount", scores: { detail: 1, safety: 2 } }
+      ]
+    },
+    {
+      id: "task_sequence",
+      type: "task",
+      section: "Short practical exercises",
+      prompt: "Which order is the safest way to clean an occupied enclosure?",
+      options: [
+        {
+          value: "safe",
+          label: "Move the animal to a secure space; remove waste; wash and rinse; dry and replace bedding; return the animal",
+          scores: { practical: 5, safety: 5, learning: 4 }
+        },
+        {
+          value: "animal_inside",
+          label: "Spray the enclosure; move the animal; remove waste; add bedding; dry the floor",
+          scores: { practical: 1, safety: 1, learning: 2 }
+        },
+        {
+          value: "wet_return",
+          label: "Move the animal; wash the enclosure; add bedding while wet; return the animal; remove waste",
+          scores: { practical: 2, safety: 1, learning: 2 }
+        }
+      ]
+    },
+    {
+      id: "task_reading",
+      type: "task",
+      section: "Short practical exercises",
+      prompt: "A care note says: “If the animal refuses food, do not hide the medicine in another food. Record ‘not given’ and tell the lead before the next round.” The animal refuses breakfast. What should happen?",
+      options: [
+        {
+          value: "record_tell",
+          label: "Record ‘not given’ and tell the lead before the next round",
+          scores: { learning: 5, detail: 5, safety: 5 }
+        },
+        {
+          value: "hide",
+          label: "Hide the medicine in a different food and try again",
+          scores: { learning: 1, detail: 1, safety: 1 }
+        },
+        {
+          value: "later",
+          label: "Wait until the end of the shift to mention it",
+          scores: { learning: 2, detail: 2, safety: 2 }
+        }
+      ]
+    },
+    {
+      id: "task_numbers",
+      type: "task",
+      section: "Short practical exercises",
+      prompt: "A shelf starts with 24 cans. Seven are used in the morning and five in the afternoon. How many remain?",
+      options: [
+        { value: "10", label: "10", scores: { numbers: 2, detail: 2 } },
+        { value: "12", label: "12", scores: { numbers: 5, detail: 4 } },
+        { value: "14", label: "14", scores: { numbers: 2, detail: 2 } },
+        { value: "16", label: "16", scores: { numbers: 1, detail: 1 } }
+      ]
+    },
+    {
+      id: "limits",
+      type: "limits",
+      section: "Practical fit",
+      prompt: "Mark any conditions you strongly want a job to avoid.",
+      helper: "Leave everything unchecked if none are firm limits. These choices lower affected job matches but do not judge your ability."
+    }
+  ];
+
+  const hardNoOptions = [
+    { id: "noise", label: "Frequent loud noise or barking" },
+    { id: "injury", label: "Injured animals, blood, or medical procedures" },
+    { id: "conflict", label: "Regular customer conflict" },
+    { id: "waste", label: "Cleaning animal waste or heavy messes" },
+    { id: "lifting", label: "Regular lifting over about 25 pounds" },
+    { id: "outdoors", label: "Working outdoors in difficult weather" },
+    { id: "weekends", label: "Evening, weekend, or holiday shifts" }
+  ];
+
+  const jobs = [
+    {
+      tier: "now",
+      title: "Farm-animal caretaker",
+      training: "Usually learned on the job",
+      interests: { animals: 0.8, plants: 0.2 },
+      abilities: { consistency: 0.25, detail: 0.2, practical: 0.2, safety: 0.2, learning: 0.15 },
+      env: { pace: 2, people: 1, structure: 1, setting: 2, schedule: 3, emotion: 2 },
+      tags: ["waste", "lifting", "outdoors", "weekends"],
+      watch: "Animal care is physically demanding and schedules often include early mornings, weekends, or holidays.",
+      url: "https://www.onetonline.org/link/summary/45-2093.00"
+    },
+    {
+      tier: "now",
+      title: "Kennel or boarding attendant",
+      training: "GED plus on-the-job training is common",
+      interests: { animals: 0.8, maintain: 0.2 },
+      abilities: { consistency: 0.2, detail: 0.2, practical: 0.15, safety: 0.25, steadiness: 0.2 },
+      env: { pace: 2, people: 2, structure: 1, setting: 3, schedule: 3, emotion: 2 },
+      tags: ["noise", "injury", "waste", "lifting", "weekends"],
+      watch: "Boarding facilities can become loud and hectic during drop-off, pickup, and holidays.",
+      url: "https://www.onetonline.org/link/summary/39-2021.00"
+    },
+    {
+      tier: "now",
+      title: "Pet sitter or dog walker",
+      training: "Experience, references, and basic business setup",
+      interests: { animals: 0.9, delivery: 0.1 },
+      abilities: { consistency: 0.25, detail: 0.2, safety: 0.25, communication: 0.15, practical: 0.15 },
+      env: { pace: 1, people: 1, structure: 2, setting: 2, schedule: 3, emotion: 1 },
+      tags: ["noise", "outdoors", "weekends"],
+      watch: "Independent pet care still requires client communication, reliable transportation, and irregular peak times.",
+      url: "https://www.onetonline.org/link/summary/39-2021.00"
+    },
+    {
+      tier: "now",
+      title: "Greenhouse or nursery worker",
+      training: "Usually learned on the job",
+      interests: { plants: 0.7, organize: 0.15, maintain: 0.15 },
+      abilities: { consistency: 0.3, detail: 0.2, practical: 0.25, learning: 0.15, safety: 0.1 },
+      env: { pace: 2, people: 1, structure: 1, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["lifting", "outdoors", "weekends"],
+      watch: "The work can be seasonal, warm, wet, repetitive, and physically active.",
+      url: "https://www.onetonline.org/link/summary/45-2092.00"
+    },
+    {
+      tier: "now",
+      title: "Library materials aide",
+      training: "GED and short on-the-job training for many aide roles",
+      interests: { organize: 0.45, records: 0.35, help: 0.2 },
+      abilities: { detail: 0.3, consistency: 0.25, learning: 0.2, numbers: 0.15, communication: 0.1 },
+      env: { pace: 1, people: 2, structure: 1, setting: 1, schedule: 1, emotion: 1 },
+      tags: [],
+      watch: "Some positions include a public service desk and may have limited hours or openings.",
+      url: "https://www.onetonline.org/link/summary/43-4121.00"
+    },
+    {
+      tier: "now",
+      title: "Stock or inventory associate",
+      training: "Usually short on-the-job training",
+      interests: { organize: 0.45, delivery: 0.35, records: 0.2 },
+      abilities: { consistency: 0.25, detail: 0.25, practical: 0.2, numbers: 0.15, safety: 0.15 },
+      env: { pace: 2, people: 1, structure: 1, setting: 3, schedule: 2, emotion: 1 },
+      tags: ["noise", "lifting", "weekends"],
+      watch: "Retail inventory work may involve quotas, overnight shifts, or sudden rushes; back-room roles vary greatly by employer.",
+      url: "https://www.onetonline.org/link/summary/53-7065.00"
+    },
+    {
+      tier: "now",
+      title: "Grounds maintenance worker",
+      training: "Usually learned on the job",
+      interests: { plants: 0.45, maintain: 0.25, repair: 0.2, delivery: 0.1 },
+      abilities: { practical: 0.3, consistency: 0.25, safety: 0.2, detail: 0.15, learning: 0.1 },
+      env: { pace: 2, people: 1, structure: 2, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["noise", "lifting", "outdoors"],
+      watch: "Weather, machinery noise, seasonal hours, and physical stamina matter.",
+      url: "https://www.onetonline.org/link/summary/37-3011.00"
+    },
+    {
+      tier: "now",
+      title: "Pet bather or grooming assistant",
+      training: "Often learned through supervised practice",
+      interests: { animals: 0.65, maintain: 0.2, creative: 0.15 },
+      abilities: { practical: 0.25, steadiness: 0.2, safety: 0.2, detail: 0.2, consistency: 0.15 },
+      env: { pace: 3, people: 2, structure: 1, setting: 3, schedule: 2, emotion: 2 },
+      tags: ["noise", "injury", "waste", "lifting", "weekends"],
+      watch: "Bathing areas are noisy and wet, and frightened animals may scratch, bite, or resist handling.",
+      url: "https://www.onetonline.org/link/summary/39-2021.00"
+    },
+    {
+      tier: "now",
+      title: "Quality inspection or packaging trainee",
+      training: "GED plus employer training for many entry roles",
+      interests: { organize: 0.25, records: 0.25, repair: 0.15, delivery: 0.35 },
+      abilities: { detail: 0.35, consistency: 0.25, numbers: 0.15, safety: 0.15, practical: 0.1 },
+      env: { pace: 3, people: 1, structure: 1, setting: 3, schedule: 2, emotion: 1 },
+      tags: ["noise", "lifting", "weekends"],
+      watch: "Production employers differ sharply; some use calm inspection stations, while others enforce fast line speeds.",
+      url: "https://www.onetonline.org/link/summary/51-9061.00"
+    },
+    {
+      tier: "training",
+      title: "Veterinary assistant",
+      training: "Employer training or a short certificate",
+      interests: { animals: 0.65, science: 0.25, records: 0.1 },
+      abilities: { detail: 0.2, safety: 0.2, learning: 0.2, steadiness: 0.2, communication: 0.2 },
+      env: { pace: 3, people: 3, structure: 1, setting: 3, schedule: 3, emotion: 3 },
+      tags: ["noise", "injury", "conflict", "waste", "lifting", "weekends"],
+      watch: "Clinics can be fast, emotionally difficult, and physically risky even when the animal-care duties are appealing.",
+      url: "https://www.onetonline.org/link/summary/31-9096.00"
+    },
+    {
+      tier: "training",
+      title: "Pet groomer",
+      training: "Apprenticeship, supervised practice, or a grooming program",
+      interests: { animals: 0.55, creative: 0.25, maintain: 0.2 },
+      abilities: { practical: 0.25, steadiness: 0.2, detail: 0.2, safety: 0.2, communication: 0.15 },
+      env: { pace: 2, people: 3, structure: 2, setting: 3, schedule: 2, emotion: 2 },
+      tags: ["noise", "injury", "conflict", "waste", "lifting", "weekends"],
+      watch: "The craft may fit while the salon does not; noise, scheduling pressure, animal restraint, and client expectations are central.",
+      url: "https://www.onetonline.org/link/summary/39-2021.00"
+    },
+    {
+      tier: "training",
+      title: "Dog trainer",
+      training: "Structured experience, mentorship, and optional certification",
+      interests: { animals: 0.6, help: 0.2, science: 0.2 },
+      abilities: { learning: 0.2, communication: 0.25, steadiness: 0.2, detail: 0.15, safety: 0.2 },
+      env: { pace: 2, people: 3, structure: 2, setting: 2, schedule: 2, emotion: 2 },
+      tags: ["noise", "injury", "conflict", "outdoors", "weekends"],
+      watch: "Training animals also means teaching owners, handling inconsistent follow-through, and sometimes managing reactive dogs.",
+      url: "https://www.onetonline.org/link/summary/39-2011.00"
+    },
+    {
+      tier: "training",
+      title: "Medical records specialist",
+      training: "Often a certificate; requirements vary by employer",
+      interests: { records: 0.7, organize: 0.2, help: 0.1 },
+      abilities: { detail: 0.3, learning: 0.25, numbers: 0.2, consistency: 0.15, communication: 0.1 },
+      env: { pace: 2, people: 1, structure: 1, setting: 1, schedule: 1, emotion: 1 },
+      tags: [],
+      watch: "This path requires sustained computer work, careful reading, and learning medical terminology.",
+      url: "https://www.onetonline.org/link/summary/29-2072.00"
+    },
+    {
+      tier: "training",
+      title: "Bookkeeping or accounts clerk",
+      training: "Targeted courses or a certificate can open entry roles",
+      interests: { records: 0.65, organize: 0.25, help: 0.1 },
+      abilities: { numbers: 0.35, detail: 0.3, consistency: 0.2, learning: 0.1, communication: 0.05 },
+      env: { pace: 2, people: 1, structure: 1, setting: 1, schedule: 1, emotion: 1 },
+      tags: [],
+      watch: "Accuracy and deadline periods matter, and entry-level opportunities vary as routine tasks become more automated.",
+      url: "https://www.onetonline.org/link/summary/43-3031.00"
+    },
+    {
+      tier: "training",
+      title: "Sterile processing technician",
+      training: "Certificate or employer training; certification may be preferred",
+      interests: { organize: 0.35, science: 0.25, maintain: 0.25, records: 0.15 },
+      abilities: { detail: 0.3, consistency: 0.25, learning: 0.2, safety: 0.2, practical: 0.05 },
+      env: { pace: 3, people: 2, structure: 1, setting: 3, schedule: 3, emotion: 1 },
+      tags: ["noise", "lifting", "weekends"],
+      watch: "It avoids most patient interaction but still carries hospital urgency, standing, heat, protective equipment, and strict accuracy demands.",
+      url: "https://www.onetonline.org/link/summary/31-9093.00"
+    },
+    {
+      tier: "training",
+      title: "Agricultural technician — plant or greenhouse focus",
+      training: "Certificate, technical diploma, or substantial work experience",
+      interests: { plants: 0.6, science: 0.2, organize: 0.1, repair: 0.1 },
+      abilities: { practical: 0.25, learning: 0.25, detail: 0.2, consistency: 0.2, safety: 0.1 },
+      env: { pace: 2, people: 1, structure: 2, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["lifting", "outdoors", "weekends"],
+      watch: "Seasonal demand, weather, pesticides, and physical work vary by employer and specialty.",
+      url: "https://www.onetonline.org/link/summary/19-4012.00"
+    },
+    {
+      tier: "training",
+      title: "Quality control inspector",
+      training: "Employer training; technical coursework helps for specialized roles",
+      interests: { records: 0.35, organize: 0.25, repair: 0.2, science: 0.2 },
+      abilities: { detail: 0.35, numbers: 0.2, safety: 0.2, learning: 0.15, consistency: 0.1 },
+      env: { pace: 2, people: 2, structure: 1, setting: 3, schedule: 2, emotion: 1 },
+      tags: ["noise", "lifting", "weekends"],
+      watch: "Look specifically for bench inspection, receiving inspection, or lab-style quality roles rather than fast production lines.",
+      url: "https://www.onetonline.org/link/summary/51-9061.00"
+    },
+    {
+      tier: "long",
+      title: "Veterinary technician",
+      training: "Usually a two-year veterinary technology degree plus state credentialing",
+      interests: { animals: 0.5, science: 0.35, records: 0.15 },
+      abilities: { detail: 0.2, safety: 0.2, learning: 0.2, steadiness: 0.2, communication: 0.2 },
+      env: { pace: 3, people: 3, structure: 1, setting: 3, schedule: 3, emotion: 3 },
+      tags: ["noise", "injury", "conflict", "waste", "lifting", "weekends"],
+      watch: "This is medically and emotionally demanding work involving distressed owners, injured animals, procedures, and sometimes euthanasia.",
+      url: "https://www.onetonline.org/link/summary/29-2056.00"
+    },
+    {
+      tier: "long",
+      title: "Environmental science and protection technician",
+      training: "Often an associate degree; some employers require more",
+      interests: { science: 0.45, plants: 0.25, records: 0.2, delivery: 0.1 },
+      abilities: { detail: 0.25, learning: 0.25, numbers: 0.2, practical: 0.15, safety: 0.15 },
+      env: { pace: 2, people: 2, structure: 1, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["outdoors"],
+      watch: "Programs include science and math coursework; jobs may combine field sampling, travel, protective equipment, laboratories, and detailed records.",
+      url: "https://www.onetonline.org/link/summary/19-4042.00"
+    },
+    {
+      tier: "long",
+      title: "Biological technician",
+      training: "A bachelor's degree is typical, although some lab roles accept an associate degree",
+      interests: { science: 0.6, records: 0.25, animals: 0.1, plants: 0.05 },
+      abilities: { detail: 0.3, learning: 0.3, numbers: 0.2, safety: 0.15, communication: 0.05 },
+      env: { pace: 2, people: 2, structure: 1, setting: 1, schedule: 1, emotion: 1 },
+      tags: [],
+      watch: "This route requires substantial science coursework and precise written documentation.",
+      url: "https://www.onetonline.org/link/summary/19-4021.00"
+    },
+    {
+      tier: "long",
+      title: "Forest or conservation technician",
+      training: "Often an associate degree or technical program",
+      interests: { plants: 0.45, science: 0.3, repair: 0.15, records: 0.1 },
+      abilities: { practical: 0.25, detail: 0.2, learning: 0.2, adaptability: 0.15, safety: 0.2 },
+      env: { pace: 2, people: 1, structure: 2, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["lifting", "outdoors"],
+      watch: "Field jobs may involve remote locations, difficult weather, driving, seasonal work, and changing conditions.",
+      url: "https://www.onetonline.org/link/summary/19-4071.00"
+    },
+    {
+      tier: "long",
+      title: "Animal scientist",
+      training: "A bachelor's degree is typical; research roles may require graduate study",
+      interests: { animals: 0.4, science: 0.45, records: 0.15 },
+      abilities: { learning: 0.3, numbers: 0.25, detail: 0.2, communication: 0.15, consistency: 0.1 },
+      env: { pace: 2, people: 2, structure: 2, setting: 1, schedule: 1, emotion: 1 },
+      tags: [],
+      watch: "The work is less direct animal care than the title suggests and requires advanced science, math, writing, and research skills.",
+      url: "https://www.onetonline.org/link/summary/19-1011.00"
+    },
+    {
+      tier: "long",
+      title: "Zoologist or wildlife biologist",
+      training: "A bachelor's degree is typical; advanced roles often require graduate study",
+      interests: { animals: 0.35, science: 0.45, plants: 0.1, records: 0.1 },
+      abilities: { learning: 0.3, detail: 0.25, numbers: 0.2, adaptability: 0.15, communication: 0.1 },
+      env: { pace: 2, people: 2, structure: 2, setting: 2, schedule: 2, emotion: 1 },
+      tags: ["outdoors"],
+      watch: "Openings are competitive and the degree includes biology, statistics, writing, and field-research requirements.",
+      url: "https://www.onetonline.org/link/summary/19-1023.00"
+    },
+    {
+      tier: "long",
+      title: "Library technician",
+      training: "Requirements range from a certificate to an associate degree",
+      interests: { records: 0.45, organize: 0.35, help: 0.2 },
+      abilities: { detail: 0.3, learning: 0.25, consistency: 0.2, communication: 0.15, numbers: 0.1 },
+      env: { pace: 1, people: 2, structure: 1, setting: 1, schedule: 1, emotion: 1 },
+      tags: [],
+      watch: "The work is orderly, but many jobs still include patron questions, technology help, and limited local openings.",
+      url: "https://www.onetonline.org/link/summary/25-4031.00"
+    }
+  ];
+
+  const state = {
+    view: "intro",
+    index: 0,
+    answers: {},
+    interests: new Set(),
+    hardNos: new Set(),
+    note: "",
+    resultTier: "now",
+    error: ""
+  };
+
+  const likertOptions = [
+    { value: 1, label: "Not like me" },
+    { value: 2, label: "A little like me" },
+    { value: 3, label: "Sometimes like me" },
+    { value: 4, label: "Mostly like me" },
+    { value: 5, label: "Very like me" },
+    { value: null, label: "Not sure yet" }
+  ];
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function valueKey(value) {
+    return value === null ? "unsure" : String(value);
+  }
+
+  function keyValue(key) {
+    if (key === "unsure") return null;
+    if (/^-?\d+(\.\d+)?$/.test(key)) return Number(key);
+    return key;
+  }
+
+  function renderIntro() {
+    root.innerHTML = `
+      <div class="wff-shell">
+        <div class="card wff-question">
+          <div>
+            <span class="viz-badge">About 15–20 minutes</span>
+            <h2>Find work that fits how you actually work</h2>
+            <p>This quiz looks at strengths, situations that cost you energy, preferred work conditions, and job interests. It includes a few short practical exercises, but nothing is timed.</p>
+          </div>
+          <div class="wff-note">
+            <p><strong>There are no perfect answers.</strong> “Not sure yet” is allowed. The result is a starting point for exploration, not an intelligence test, diagnosis, or final decision.</p>
+          </div>
+          <p class="text-muted">Your answers stay in this page while it is open. They are not sent or saved anywhere.</p>
+        </div>
+        <div class="wff-actions wff-no-print">
+          <span></span>
+          <button class="btn btn-primary" type="button" data-action="start">Start the quiz</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderChoiceButtons(question, options) {
+    const selected = state.answers[question.id];
+    return `
+      <div class="wff-choice-list" role="group" aria-label="Answer choices">
+        ${options.map((option) => {
+          const key = valueKey(option.value);
+          const pressed = Object.prototype.hasOwnProperty.call(state.answers, question.id) && selected === option.value;
+          return `
+            <button
+              class="btn viz-tile wff-choice${pressed ? " is-selected" : ""}"
+              type="button"
+              data-action="answer"
+              data-question="${escapeHtml(question.id)}"
+              data-value="${escapeHtml(key)}"
+              aria-pressed="${pressed ? "true" : "false"}"
+            >${escapeHtml(option.label)}</button>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function renderInterests() {
+    return `
+      <div class="wff-check-grid" role="group" aria-label="Work interests">
+        ${Object.entries(interestMeta).map(([id, label]) => `
+          <label class="wff-check-item">
+            <input class="form-check-input" type="checkbox" data-action="interest" value="${escapeHtml(id)}" ${state.interests.has(id) ? "checked" : ""}>
+            <span>${escapeHtml(label)}</span>
+          </label>
+        `).join("")}
+      </div>
+      <p class="text-small text-muted">Selected: ${state.interests.size} of 3–5</p>
+    `;
+  }
+
+  function renderLimits() {
+    return `
+      <div class="wff-check-grid" role="group" aria-label="Conditions to avoid">
+        ${hardNoOptions.map((option) => `
+          <label class="wff-check-item">
+            <input class="form-check-input" type="checkbox" data-action="hard-no" value="${escapeHtml(option.id)}" ${state.hardNos.has(option.id) ? "checked" : ""}>
+            <span>${escapeHtml(option.label)}</span>
+          </label>
+        `).join("")}
+      </div>
+      <label class="form-label" for="wff-note">Optional: People often rely on me to…</label>
+      <textarea class="form-control" id="wff-note" maxlength="240" rows="3" placeholder="One short example is enough">${escapeHtml(state.note)}</textarea>
+    `;
+  }
+
+  function renderQuestion() {
+    const question = questions[state.index];
+    const progress = Math.round(((state.index + 1) / questions.length) * 100);
+    let body = "";
+
+    if (question.type === "likert") {
+      body = renderChoiceButtons(question, likertOptions);
+    } else if (["environment", "scenario", "task"].includes(question.type)) {
+      body = renderChoiceButtons(question, question.options);
+    } else if (question.type === "interests") {
+      body = renderInterests();
+    } else if (question.type === "limits") {
+      body = renderLimits();
+    }
+
+    const finalQuestion = state.index === questions.length - 1;
+    root.innerHTML = `
+      <div class="wff-shell">
+        <div>
+          <div class="viz-row wff-progress-meta">
+            <span class="text-small text-muted">${escapeHtml(question.section)}</span>
+            <span class="text-small text-muted">${state.index + 1} of ${questions.length}</span>
+          </div>
+          <div class="wff-progress-track" role="progressbar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}">
+            <div class="wff-progress-bar" style="width:${progress}%"></div>
+          </div>
+        </div>
+        <div class="card wff-question">
+          <div>
+            <h2>${escapeHtml(question.prompt)}</h2>
+            ${question.helper ? `<p class="text-muted">${escapeHtml(question.helper)}</p>` : ""}
+          </div>
+          ${body}
+          <p class="wff-error text-small text-destructive" role="alert">${escapeHtml(state.error)}</p>
+        </div>
+        <div class="wff-actions wff-no-print">
+          <button class="btn" type="button" data-action="back">${state.index === 0 ? "Return to start" : "Back"}</button>
+          <div class="wff-actions-end">
+            ${question.type !== "limits" ? `<button class="btn btn-ghost" type="button" data-action="pause">Pause here</button>` : ""}
+            <button class="btn btn-primary" type="button" data-action="next">${finalQuestion ? "See my results" : "Next"}</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function canContinue(question) {
+    state.error = "";
+    if (question.type === "interests") {
+      if (state.interests.size < 3 || state.interests.size > 5) {
+        state.error = "Choose between 3 and 5 activities before continuing.";
+        return false;
+      }
+      return true;
+    }
+    if (question.type === "limits") return true;
+    if (!Object.prototype.hasOwnProperty.call(state.answers, question.id)) {
+      state.error = "Choose an answer before continuing. “Not sure yet” is available when appropriate.";
+      return false;
+    }
+    return true;
+  }
+
+  function calculateDimensions() {
+    const totals = {};
+    const weights = {};
+    const add = (dim, value, weight) => {
+      if (value === null || value === undefined) return;
+      totals[dim] = (totals[dim] || 0) + value * weight;
+      weights[dim] = (weights[dim] || 0) + weight;
+    };
+
+    questions.forEach((question) => {
+      if (question.type === "likert") {
+        const answer = state.answers[question.id];
+        if (answer === null || answer === undefined) return;
+        Object.entries(question.dims).forEach(([dim, weight]) => add(dim, answer, weight));
+      }
+      if (["scenario", "task"].includes(question.type)) {
+        const selected = question.options.find((option) => option.value === state.answers[question.id]);
+        if (!selected || !selected.scores) return;
+        Object.entries(selected.scores).forEach(([dim, value]) => add(dim, value, 1));
+      }
+    });
+
+    return Object.keys(dimensionMeta).reduce((result, dim) => {
+      const average = weights[dim] ? totals[dim] / weights[dim] : 3;
+      result[dim] = Math.round(((average - 1) / 4) * 100);
+      return result;
+    }, {});
+  }
+
+  function environmentPreferences() {
+    const ids = ["pace", "people", "structure", "setting", "schedule", "emotion"];
+    return ids.reduce((prefs, id) => {
+      const value = state.answers[id];
+      prefs[id] = value === null || value === undefined ? 2 : value;
+      return prefs;
+    }, {});
+  }
+
+  function weightedAverage(values, weights) {
+    let total = 0;
+    let weightTotal = 0;
+    Object.entries(weights).forEach(([key, weight]) => {
+      total += (values[key] ?? 50) * weight;
+      weightTotal += weight;
+    });
+    return weightTotal ? total / weightTotal : 50;
+  }
+
+  function scoreJobs(dimensions) {
+    const prefs = environmentPreferences();
+    const interestScores = Object.keys(interestMeta).reduce((result, id) => {
+      result[id] = state.interests.has(id) ? 100 : 20;
+      return result;
+    }, {});
+
+    return jobs.map((job) => {
+      const ability = weightedAverage(dimensions, job.abilities);
+      const interest = weightedAverage(interestScores, job.interests);
+      const envParts = Object.entries(job.env).map(([key, required]) => 100 - Math.abs(prefs[key] - required) * 38);
+      const environment = envParts.reduce((sum, value) => sum + value, 0) / envParts.length;
+      const conflicts = job.tags.filter((tag) => state.hardNos.has(tag));
+      const penalty = Math.min(45, conflicts.length * 18);
+      const score = Math.max(0, Math.round(interest * 0.42 + ability * 0.38 + environment * 0.2 - penalty));
+      return { ...job, score, ability, interest, environment, conflicts };
+    }).sort((a, b) => b.score - a.score);
+  }
+
+  function signalLabel(score, conflicts) {
+    if (conflicts && conflicts.length) return "Conditional fit";
+    if (score >= 76) return "Strong lead";
+    if (score >= 62) return "Promising lead";
+    return "Worth exploring";
+  }
+
+  function environmentSummary() {
+    const phrases = {
+      pace: {
+        1: "a steady pace",
+        2: "busy periods with clear priorities",
+        3: "rapid decisions and frequent urgency"
+      },
+      people: {
+        1: "mostly independent work",
+        2: "a small familiar team",
+        3: "frequent contact with customers or coworkers"
+      },
+      structure: {
+        1: "clear steps or checklists",
+        2: "clear goals with some independence",
+        3: "directions that change through the day"
+      },
+      setting: {
+        1: "a quieter indoor setting",
+        2: "active or outdoor work",
+        3: "a busy, noisy setting"
+      },
+      schedule: {
+        1: "a consistent schedule",
+        2: "some planned schedule variation",
+        3: "frequently changing shifts"
+      },
+      emotion: {
+        1: "low emotional intensity",
+        2: "occasional hard moments with recovery time",
+        3: "frequent emotionally difficult situations"
+      }
+    };
+    const prefs = environmentPreferences();
+    return ["pace", "people", "structure", "setting", "schedule", "emotion"]
+      .map((id) => phrases[id][prefs[id]])
+      .join(", ");
+  }
+
+  function matchedStrengths(job, dimensions) {
+    const ranked = Object.keys(job.abilities)
+      .sort((a, b) => (dimensions[b] * job.abilities[b]) - (dimensions[a] * job.abilities[a]))
+      .slice(0, 2)
+      .map((dim) => dimensionMeta[dim].label.toLowerCase());
+    const matchedInterests = Object.keys(job.interests)
+      .filter((id) => state.interests.has(id))
+      .sort((a, b) => job.interests[b] - job.interests[a])
+      .slice(0, 1)
+      .map((id) => interestMeta[id]);
+    const pieces = [...matchedInterests, ...ranked];
+    return pieces.length ? `Matches your signals for ${pieces.join(", ")}.` : "This path is worth a closer look based on the overall pattern.";
+  }
+
+  function conflictText(job) {
+    if (!job.conflicts.length) return job.watch;
+    const labels = job.conflicts.map((tag) => hardNoOptions.find((item) => item.id === tag)?.label.toLowerCase()).filter(Boolean);
+    return `You marked ${labels.join(" and ")} as a condition to avoid. ${job.watch}`;
+  }
+
+  function tierJobsHtml(tier, dimensions, scoredJobs) {
+    const tierJobs = scoredJobs.filter((job) => job.tier === tier).slice(0, 4);
+    return tierJobs.map((job) => `
+      <article class="wff-job">
+        <div class="wff-job-heading">
+          <h3>${escapeHtml(job.title)}</h3>
+          <span class="viz-badge">${escapeHtml(signalLabel(job.score, job.conflicts))}</span>
+        </div>
+        <p><strong>Preparation:</strong> ${escapeHtml(job.training)}</p>
+        <p>${escapeHtml(matchedStrengths(job, dimensions))}</p>
+        <p class="text-muted"><strong>Check before committing:</strong> ${escapeHtml(conflictText(job))}</p>
+        <a class="wff-source-link" href="${escapeHtml(job.url)}" target="_blank" rel="noreferrer">Explore this occupation in O*NET</a>
+      </article>
+    `).join("");
+  }
+
+  function resultSummaryText(dimensions, scoredJobs) {
+    const strengths = Object.entries(dimensions).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const strains = Object.entries(dimensions).sort((a, b) => a[1] - b[1]).filter(([, score]) => score < 65).slice(0, 2);
+    const topByTier = ["now", "training", "long"].map((tier) => scoredJobs.find((job) => job.tier === tier));
+    const lines = [
+      "WORK FIT FINDER — RESULT SUMMARY",
+      "",
+      "Strongest signals:",
+      ...strengths.map(([dim]) => `- ${dimensionMeta[dim].label}`),
+      "",
+      "Conditions that may help:",
+      `- ${environmentSummary()}`,
+      "",
+      "Possible strain points:",
+      ...(strains.length ? strains.map(([dim]) => `- ${dimensionMeta[dim].strain}`) : ["- No strong strain signal appeared in these answers."]),
+      "",
+      "Leading paths:",
+      ...topByTier.filter(Boolean).map((job) => `- ${job.title} (${job.training})`)
+    ];
+    if (state.note.trim()) lines.push("", `Something people rely on me for: ${state.note.trim()}`);
+    lines.push("", "This result is an exploration guide, not a diagnosis or final career decision.");
+    return lines.join("\n");
+  }
+
+  function renderResults() {
+    const dimensions = calculateDimensions();
+    const scoredJobs = scoreJobs(dimensions);
+    const strengths = Object.entries(dimensions).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const strains = Object.entries(dimensions).sort((a, b) => a[1] - b[1]).filter(([, score]) => score < 65).slice(0, 2);
+    const tierLabels = {
+      now: "Possible now",
+      training: "Short training",
+      long: "Longer path"
+    };
+
+    root.innerHTML = `
+      <div class="wff-shell">
+        <div>
+          <span class="viz-badge">Your work-fit snapshot</span>
+          <h2>Use this result to choose what to test next</h2>
+          <p class="text-muted">The strongest result is not automatically the right job. A good next step is a tour, job shadow, volunteer shift, or short class that tests the work environment before making a large commitment.</p>
+        </div>
+
+        <div class="wff-summary-grid">
+          <section class="card wff-result-section" aria-labelledby="wff-strength-heading">
+            <h3 id="wff-strength-heading">Strongest signals</h3>
+            <div class="wff-signal-list">
+              ${strengths.map(([dim, score]) => `
+                <div class="wff-signal">
+                  <div class="wff-job-heading">
+                    <strong>${escapeHtml(dimensionMeta[dim].label)}</strong>
+                    <span class="text-small text-muted">${score}/100</span>
+                  </div>
+                  <div class="wff-meter" aria-label="${escapeHtml(dimensionMeta[dim].label)} score ${score} out of 100">
+                    <div class="wff-meter-fill" style="width:${score}%"></div>
+                  </div>
+                  <span class="text-small">${escapeHtml(dimensionMeta[dim].strength)}</span>
+                </div>
+              `).join("")}
+            </div>
+          </section>
+
+          <section class="card wff-result-section" aria-labelledby="wff-strain-heading">
+            <h3 id="wff-strain-heading">Possible strain points</h3>
+            ${strains.length ? strains.map(([dim]) => `
+                <div>
+                  <strong>${escapeHtml(dimensionMeta[dim].label)}</strong>
+                  <p>${escapeHtml(dimensionMeta[dim].strain)}</p>
+                </div>
+              `).join("") : `<p>No strong strain signal appeared in these answers. Real-world trials are still more useful than a quiz score.</p>`}
+            ${strains.length ? `<p class="text-muted">A strain point can mean “use support or choose the setting carefully.” It does not mean “you cannot do this.”</p>` : ""}
+          </section>
+        </div>
+
+        <section class="card wff-result-section" aria-labelledby="wff-setting-heading">
+          <h3 id="wff-setting-heading">Conditions that may help you do your best</h3>
+          <p>${escapeHtml(environmentSummary())}.</p>
+          ${state.note.trim() ? `<p class="wff-note"><strong>People often rely on me to:</strong> ${escapeHtml(state.note.trim())}</p>` : ""}
+        </section>
+
+        <section class="card wff-result-section" aria-labelledby="wff-job-heading">
+          <div>
+            <h3 id="wff-job-heading">Career and job leads</h3>
+            <p class="text-muted">These are ranked by interests, work skills, preferred environment, and conditions you marked to avoid.</p>
+          </div>
+          <div class="wff-tabs wff-no-print" role="tablist" aria-label="Career preparation level">
+            ${Object.entries(tierLabels).map(([tier, label]) => `
+              <button class="btn${state.resultTier === tier ? " btn-primary" : ""}" type="button" role="tab" aria-selected="${state.resultTier === tier}" aria-controls="wff-tier-${tier}" data-action="tier" data-tier="${tier}">${escapeHtml(label)}</button>
+            `).join("")}
+          </div>
+          ${Object.entries(tierLabels).map(([tier, label]) => `
+            <div class="wff-tier-panel wff-result-section" id="wff-tier-${tier}" role="tabpanel" ${state.resultTier === tier ? "" : "hidden"}>
+              <h3>${escapeHtml(label)}</h3>
+              <div class="wff-job-list">
+                ${tierJobsHtml(tier, dimensions, scoredJobs)}
+              </div>
+            </div>
+          `).join("")}
+        </section>
+
+        <section class="card wff-result-section">
+          <h3>A sensible next test</h3>
+          <ol>
+            <li>Choose one “Possible now” lead and one training path.</li>
+            <li>Read three real local job postings for each. Compare pace, noise, schedule, people contact, and physical demands—not only the job title.</li>
+            <li>Try the environment in a small, reversible way before committing to a program.</li>
+          </ol>
+        </section>
+
+        <div class="wff-actions wff-no-print">
+          <button class="btn btn-ghost" type="button" data-action="restart">Start over</button>
+          <div class="wff-actions-end">
+            <button class="btn" type="button" data-action="copy">Copy summary</button>
+            <button class="btn btn-primary" type="button" data-action="print">Print or save as PDF</button>
+          </div>
+        </div>
+        <p class="text-small text-muted">Career descriptions link to O*NET. Education requirements and work conditions vary by employer and location. Results are not stored after this page closes.</p>
+      </div>
+    `;
+
+    root.dataset.summary = resultSummaryText(dimensions, scoredJobs);
+  }
+
+  function renderPause() {
+    root.innerHTML = `
+      <div class="wff-shell">
+        <div class="card wff-question">
+          <div>
+            <span class="viz-badge">Paused at question ${state.index + 1} of ${questions.length}</span>
+            <h2>Take the time you need</h2>
+            <p>Your answers will remain here as long as this page stays open. Refreshing or closing the page will clear them.</p>
+          </div>
+        </div>
+        <div class="wff-actions">
+          <span></span>
+          <button class="btn btn-primary" type="button" data-action="resume">Continue</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function render() {
+    if (state.view === "intro") renderIntro();
+    if (state.view === "question") renderQuestion();
+    if (state.view === "pause") renderPause();
+    if (state.view === "results") renderResults();
+  }
+
+  root.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-action]");
+    if (!button) return;
+    const action = button.dataset.action;
+
+    if (action === "start") {
+      state.view = "question";
+      state.index = 0;
+      state.error = "";
+      render();
+      return;
+    }
+
+    if (action === "answer") {
+      const questionId = button.dataset.question;
+      state.answers[questionId] = keyValue(button.dataset.value);
+      state.error = "";
+      render();
+      return;
+    }
+
+    if (action === "next") {
+      const question = questions[state.index];
+      if (!canContinue(question)) {
+        render();
+        return;
+      }
+      if (state.index === questions.length - 1) {
+        state.view = "results";
+      } else {
+        state.index += 1;
+      }
+      state.error = "";
+      render();
+      return;
+    }
+
+    if (action === "back") {
+      state.error = "";
+      if (state.index === 0) {
+        state.view = "intro";
+      } else {
+        state.index -= 1;
+      }
+      render();
+      return;
+    }
+
+    if (action === "pause") {
+      state.view = "pause";
+      render();
+      return;
+    }
+
+    if (action === "resume") {
+      state.view = "question";
+      render();
+      return;
+    }
+
+    if (action === "tier") {
+      state.resultTier = button.dataset.tier;
+      render();
+      return;
+    }
+
+    if (action === "restart") {
+      state.view = "intro";
+      state.index = 0;
+      state.answers = {};
+      state.interests = new Set();
+      state.hardNos = new Set();
+      state.note = "";
+      state.resultTier = "now";
+      state.error = "";
+      render();
+      return;
+    }
+
+    if (action === "copy") {
+      const summary = root.dataset.summary || "";
+      try {
+        await navigator.clipboard.writeText(summary);
+        button.textContent = "Summary copied";
+      } catch (error) {
+        button.textContent = "Copy unavailable";
+      }
+      return;
+    }
+
+    if (action === "print") {
+      window.print();
+    }
+  });
+
+  root.addEventListener("change", (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+    if (input.dataset.action === "interest") {
+      if (input.checked) state.interests.add(input.value);
+      else state.interests.delete(input.value);
+      state.error = "";
+      render();
+    }
+    if (input.dataset.action === "hard-no") {
+      if (input.checked) state.hardNos.add(input.value);
+      else state.hardNos.delete(input.value);
+      state.error = "";
+      render();
+    }
+  });
+
+  root.addEventListener("input", (event) => {
+    if (event.target.id === "wff-note") state.note = event.target.value;
+  });
+
+  render();
+})();
+</script>
+
+<script id="codex-visualization-floating-ui-core" src="https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js"></script>
+<script id="codex-visualization-floating-ui-dom" src="https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js"></script>
+<script id="codex-visualization-lucide" async src="https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js"></script>
+<script id="codex-visualization-tooltip">/* oxlint-disable typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-return */
+// Runs inside the visualization sandbox, not the host webview.
+(() => {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set(["top", "right", "bottom", "left"]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =>
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest("[data-tooltip]")
+      : null;
+  const containsTarget = (trigger, target) =>
+    target?.nodeType != null && trigger.contains(target);
+  const getContent = (trigger) =>
+    trigger.getAttribute("data-tooltip")?.trim() ?? "";
+  const getPlacement = (trigger) => {
+    const placement = trigger.getAttribute("data-tooltip-placement");
+    return tooltipPlacements.has(placement) ? placement : "top";
+  };
+  const getTooltip = () => {
+    if (tooltip == null) {
+      tooltip = document.createElement("div");
+      tooltip.id = tooltipId;
+      tooltip.className = "tooltip";
+      tooltip.setAttribute("role", "tooltip");
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) => {
+    const ids = new Set(
+      (trigger.getAttribute("aria-describedby") ?? "")
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute("aria-describedby");
+    } else {
+      trigger.setAttribute("aria-describedby", [...ids].join(" "));
+    }
+  };
+  const clearOpenTimeout = () => {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) => {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) => {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              "--tooltip-available-width",
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              "--tooltip-available-height",
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: "fixed",
+    })
+      .then(({ x, y }) => {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = "visible";
+      })
+      .catch(() => {
+        if (activeTrigger === trigger && request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) => {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = "hidden";
+    floating.style.transform = "translate(0, 0)";
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () => {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) => {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() < skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() => {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) => {
+    if (event.pointerType === "touch") {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(":focus-visible")) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) => {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () => {
+    closeTooltip(false);
+    document.removeEventListener("pointerover", handlePointerOpen);
+    document.removeEventListener("pointerout", handleLeave);
+    document.removeEventListener("focusin", handleFocusIn);
+    document.removeEventListener("focusout", handleLeave);
+    document.removeEventListener("keydown", handleKeyDown);
+    document.removeEventListener("contextmenu", handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener("pointerover", handlePointerOpen);
+  document.addEventListener("pointerout", handleLeave);
+  document.addEventListener("focusin", handleFocusIn);
+  document.addEventListener("focusout", handleLeave);
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("contextmenu", handleContextMenu);
+  window.addEventListener("pagehide", destroy, { once: true });
+})();
+</script>
+<script id="codex-visualization-lucide-initialization">(() => {
+  const initialize = () => {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById("codex-visualization-lucide")
+    ?.addEventListener("load", initialize, { once: true });
+})();
+</script>
+</body>
+</html>
